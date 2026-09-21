@@ -1,7 +1,7 @@
 {
-  "name": "Vianda — Menú y compra",
-  "short_name": "Vianda",
-  "description": "Menú semanal y lista de la compra",
+  "name": "Menuse — Menú y compra",
+  "short_name": "Menuse",
+  "description": "Qué comer cada día y la compra de la semana",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
