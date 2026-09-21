@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover">
-<title>Vianda — Menú y compra</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vianda</title>
 <meta name="description" content="Menú semanal y lista de la compra">
-<meta name="theme-color" content="#2F4B3C">
+<meta name="theme-color" content="#1F4D3D">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Vianda">
@@ -15,581 +15,678 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petrona:wght@400;500;600;700&family=Archivo:wght@400;500;600;700&display=swap">
 <style>
 :root{
-  --bg:#EEF1E6;
-  --surface:#FFFFFF;
-  --ink:#23291E;
-  --ink-soft:#5B6355;
-  --primary:#2F4B3C;
-  --primary-ink:#EAF1EC;
-  --accent:#C97B2E;
-  --accent-ink:#4A2D0F;
-  --muted:#8B9284;
-  --line:#DDE3D3;
-  --done:#B9C4AE;
-  --danger:#A8402F;
-  --basic-bg:#F3E4CC;
-  --basic-ink:#7A4E14;
+  color-scheme: light;
+  --paper:#EDEDE5;
+  --card:#FBFAF5;
+  --card-2:#F4F3EA;
+  --ink:#1B2420;
+  --ink-soft:#586159;
+  --ink-faint:#8D958B;
+  --brand:#1F4D3D;
+  --brand-on:#F2F7F2;
+  --brand-tint:#DFE8DF;
+  --accent:#B8501F;
+  --accent-tint:#F5E3D8;
+  --wheat:#8A6B12;
+  --wheat-tint:#EFE6C9;
+  --line:#DEDDD1;
+  --line-strong:#C7C6B6;
+  --danger:#A33A26;
+  --shadow:0 1px 2px rgba(27,36,32,.06), 0 6px 18px -12px rgba(27,36,32,.28);
+  --r:14px;
+  --r-sm:9px;
+  --sans:'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif:'Petrona', Georgia, 'Times New Roman', serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#1B1F17;
-    --surface:#242A20;
-    --ink:#EDEFE6;
-    --ink-soft:#AEB5A2;
-    --primary:#8FB89E;
-    --primary-ink:#12241A;
-    --accent:#E4A45C;
-    --accent-ink:#2E1B08;
-    --muted:#7C8672;
-    --line:#3A4133;
-    --done:#4B5442;
-    --danger:#E27860;
-    --basic-bg:#3E3121;
-    --basic-ink:#E9C285;
+    color-scheme: dark;
+    --paper:#121611;
+    --card:#1B211B;
+    --card-2:#232A23;
+    --ink:#E9EDE4;
+    --ink-soft:#A6AFA3;
+    --ink-faint:#79826F;
+    --brand:#82BC9E;
+    --brand-on:#0C1A13;
+    --brand-tint:#1E2E25;
+    --accent:#E08A5B;
+    --accent-tint:#33231A;
+    --wheat:#D6B74E;
+    --wheat-tint:#332C16;
+    --line:#2B322A;
+    --line-strong:#3C443A;
+    --danger:#E07A62;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px -12px rgba(0,0,0,.7);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#1B1F17;
-  --surface:#242A20;
-  --ink:#EDEFE6;
-  --ink-soft:#AEB5A2;
-  --primary:#8FB89E;
-  --primary-ink:#12241A;
-  --accent:#E4A45C;
-  --accent-ink:#2E1B08;
-  --muted:#7C8672;
-  --line:#3A4133;
-  --done:#4B5442;
-  --danger:#E27860;
-  --basic-bg:#3E3121;
-  --basic-ink:#E9C285;
+  color-scheme: dark;
+  --paper:#121611;
+  --card:#1B211B;
+  --card-2:#232A23;
+  --ink:#E9EDE4;
+  --ink-soft:#A6AFA3;
+  --ink-faint:#79826F;
+  --brand:#82BC9E;
+  --brand-on:#0C1A13;
+  --brand-tint:#1E2E25;
+  --accent:#E08A5B;
+  --accent-tint:#33231A;
+  --wheat:#D6B74E;
+  --wheat-tint:#332C16;
+  --line:#2B322A;
+  --line-strong:#3C443A;
+  --danger:#E07A62;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 18px -12px rgba(0,0,0,.7);
 }
+
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
 body{
-  background:var(--bg);
+  background:var(--paper);
   color:var(--ink);
-  font-family:'Inter',system-ui,-apple-system,sans-serif;
-  min-height:100vh;
-  padding-bottom:84px;
+  font-family:var(--sans);
+  font-size:15px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom, 0px));
 }
-.wrap{
-  max-width:480px;
-  margin:0 auto;
-  padding:20px 16px 8px;
+button,input{font-family:inherit;font-size:inherit;color:inherit;}
+button{cursor:pointer;}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;}
+
+.shell{max-width:520px;margin:0 auto;padding:0 16px;}
+
+/* ---------- top bar ---------- */
+.topbar{
+  position:sticky;
+  top:env(safe-area-inset-top, 0px);
+  z-index:20;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
 }
-header{
-  display:flex;
-  justify-content:space-between;
-  align-items:flex-start;
-  gap:10px;
-  margin-bottom:18px;
-}
-.brand{
-  display:flex;
-  align-items:center;
-  gap:11px;
-}
-.brand-mark{
-  width:42px;
-  height:42px;
-  border-radius:11px;
-  flex-shrink:0;
-  display:block;
-}
-header h1{
-  font-family:'Fraunces',Georgia,serif;
-  font-weight:600;
-  font-size:23px;
+.topbar-in{max-width:520px;margin:0 auto;padding:12px 16px 10px;}
+.brandrow{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.mark{width:34px;height:34px;flex:0 0 auto;border-radius:9px;display:block;}
+.wordmark{
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:21px;
+  letter-spacing:-.015em;
+  line-height:1;
   margin:0;
-  letter-spacing:-0.01em;
-  line-height:1.15;
 }
-header p{
-  margin:2px 0 0;
-  color:var(--ink-soft);
-  font-size:12.5px;
+.tagline{
+  font-size:11.5px;
+  color:var(--ink-faint);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  margin:3px 0 0;
 }
-.edit-toggle{
+.brandtext{flex:1;min-width:0;}
+.theme-btn{
+  flex:0 0 auto;
+  width:34px;height:34px;
   border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--ink-soft);
-  font-size:12px;
-  font-weight:600;
-  padding:7px 12px;
+  background:var(--card);
   border-radius:9px;
-  cursor:pointer;
-  white-space:nowrap;
-  flex-shrink:0;
-  display:flex;
-  align-items:center;
-  gap:5px;
-}
-.edit-toggle.on{
-  background:var(--primary);
-  color:var(--primary-ink);
-  border-color:var(--primary);
-}
-.edit-toggle svg{width:14px;height:14px;}
-.restore-link{
-  border:none;
-  background:none;
-  color:var(--danger);
-  font-size:12px;
-  font-weight:600;
-  cursor:pointer;
-  padding:0 0 14px;
-  display:block;
-  margin-top:-4px;
-}
-
-.weeks{
-  display:flex;
-  gap:8px;
-  overflow-x:auto;
-  padding-bottom:4px;
-  margin-bottom:18px;
-}
-.week-pill{
-  flex:1;
-  text-align:center;
-  padding:9px 0;
-  border-radius:10px;
-  border:1px solid var(--line);
-  background:var(--surface);
   color:var(--ink-soft);
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-  white-space:nowrap;
-  transition:background .15s, color .15s, border-color .15s;
+  display:grid;place-items:center;
 }
-.week-pill.active{
-  background:var(--primary);
-  color:var(--primary-ink);
-  border-color:var(--primary);
-}
-.view{display:none;}
-.view.active{display:block;}
+.theme-btn svg{width:16px;height:16px;}
 
-.day-card{
-  background:var(--surface);
+.weeks{display:flex;align-items:center;gap:10px;}
+.weeks-label{
+  font-size:10.5px;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--ink-faint);
+  font-weight:600;
+  flex:0 0 auto;
+}
+.seg{
+  display:flex;
+  flex:1;
+  gap:3px;
+  background:var(--card-2);
   border:1px solid var(--line);
-  border-radius:14px;
-  margin-bottom:10px;
+  border-radius:11px;
+  padding:3px;
+}
+.seg button{
+  flex:1;
+  border:0;
+  background:transparent;
+  color:var(--ink-soft);
+  font-weight:600;
+  font-size:13.5px;
+  font-variant-numeric:tabular-nums;
+  padding:6px 0;
+  border-radius:8px;
+  transition:background .16s ease, color .16s ease;
+}
+.seg button[aria-pressed="true"]{
+  background:var(--brand);
+  color:var(--brand-on);
+}
+
+/* ---------- menu view ---------- */
+.view{padding-top:16px;}
+.view[hidden]{display:none!important;}
+
+.day{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  margin-bottom:9px;
   overflow:hidden;
-  box-shadow:0 1px 2px rgba(35,30,20,0.05);
+  box-shadow:var(--shadow);
 }
 .day-head{
+  width:100%;
   display:flex;
-  justify-content:space-between;
   align-items:center;
-  padding:14px 16px;
-  cursor:pointer;
+  gap:12px;
+  padding:13px 14px;
+  background:transparent;
+  border:0;
+  text-align:left;
 }
-.day-head:active{background:var(--bg);}
-.day-name{
-  font-family:'Fraunces',Georgia,serif;
-  font-weight:600;
-  font-size:16px;
-}
-.day-sub{
-  font-size:12px;
-  color:var(--ink-soft);
-  margin-top:2px;
-}
-.day-chev{
-  color:var(--muted);
-  font-size:13px;
-  transition:transform .18s;
-  flex-shrink:0;
-}
-.day-card.open .day-chev{transform:rotate(180deg);}
-.day-body{
-  display:grid;
-  grid-template-rows:0fr;
-  padding:0 16px;
-  border-top:1px solid transparent;
-  transition:grid-template-rows .28s cubic-bezier(.4,0,.2,1), padding .28s ease, border-color .28s ease;
-}
-.day-card.open .day-body{
-  grid-template-rows:1fr;
-  padding:10px 16px 14px;
-  border-top-color:var(--line);
-}
-.day-body-inner{
-  overflow:hidden;
-  min-height:0;
-}
-.dish{
-  margin-bottom:14px;
-}
-.dish:last-child{margin-bottom:0;}
-.dish-name{
-  font-weight:600;
-  font-size:14px;
-  margin-bottom:6px;
-  color:var(--ink);
-}
-.ing-list{
-  list-style:none;
-  margin:0;
-  padding:0;
-}
-.ing-list li{
-  font-size:13px;
-  color:var(--ink-soft);
-  padding:3px 0 3px 14px;
-  position:relative;
-}
-.ing-list li::before{
-  content:"";
-  position:absolute;
-  left:0;
-  top:10px;
-  width:4px;
-  height:4px;
+.chip{
+  flex:0 0 auto;
+  width:30px;height:30px;
   border-radius:50%;
-  background:var(--muted);
+  display:grid;place-items:center;
+  background:var(--brand-tint);
+  color:var(--brand);
+  font-family:var(--serif);
+  font-weight:700;
+  font-size:14px;
+  line-height:1;
 }
-.basic-pill{
-  display:inline-block;
-  font-size:10px;
+.day.wknd .chip{background:var(--accent-tint);color:var(--accent);}
+.day-meta{flex:1;min-width:0;display:block;}
+.day-name{
+  font-family:var(--serif);
   font-weight:600;
-  color:var(--basic-ink);
-  background:var(--basic-bg);
-  border-radius:5px;
-  padding:1px 6px;
-  margin-left:6px;
-  cursor:default;
-  vertical-align:middle;
-}
-.basic-pill.clickable{cursor:pointer;}
-
-.list-summary{
-  display:flex;
-  justify-content:space-between;
-  align-items:baseline;
-  margin-bottom:8px;
-}
-.list-summary .count{
-  font-size:13px;
-  color:var(--ink-soft);
-}
-.reset-btn{
-  border:none;
-  background:none;
-  color:var(--accent);
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-  padding:4px;
-}
-.hide-basics-row{
+  font-size:17px;
+  line-height:1.2;
   display:flex;
   align-items:center;
   gap:7px;
-  margin-bottom:14px;
-  font-size:12px;
-  color:var(--ink-soft);
 }
-.hide-basics-row input{width:15px;height:15px;}
-
-.shop-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 4px;
-  border-bottom:1px solid var(--line);
-}
-.shop-row:last-child{border-bottom:none;}
-.check{
-  width:22px;
-  height:22px;
-  min-width:22px;
-  border-radius:50%;
-  border:1.5px solid var(--muted);
-  background:transparent;
-  cursor:pointer;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  color:var(--primary-ink);
-  font-size:12px;
-  flex-shrink:0;
-}
-.check.checked{
-  background:var(--primary);
-  border-color:var(--primary);
-}
-.shop-item{
-  flex:1;
-  min-width:0;
-}
-.shop-item-name{
-  font-size:14px;
-  line-height:1.3;
-}
-.shop-row.checked .shop-item-name{
-  color:var(--muted);
-  text-decoration:line-through;
-}
-.qty-input{
-  width:52px;
-  padding:5px 4px;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--bg);
-  color:var(--ink);
-  font-size:13px;
-  text-align:center;
-  font-family:'Inter',sans-serif;
-}
-.unit-label{
-  font-size:12px;
-  color:var(--ink-soft);
-  min-width:30px;
-}
-.del-btn{
-  border:none;
-  background:none;
-  color:var(--danger);
-  font-size:16px;
-  cursor:pointer;
-  padding:4px 2px;
-  line-height:1;
-  flex-shrink:0;
-}
-
-.add-form{
-  margin-top:16px;
-  padding:14px;
-  background:var(--surface);
-  border:1px solid var(--line);
-  border-radius:14px;
-}
-.add-form-title{
-  font-weight:600;
-  font-size:14px;
-  margin-bottom:10px;
-}
-.add-row{
-  display:flex;
-  gap:8px;
-  margin-bottom:8px;
-}
-.add-row input{
-  padding:8px 10px;
-  border:1px solid var(--line);
-  border-radius:8px;
-  background:var(--bg);
-  color:var(--ink);
-  font-size:13px;
-  font-family:'Inter',sans-serif;
-  min-width:0;
-}
-.add-row input.name-input{flex:2;}
-.add-row input.qty-input-form{flex:1;}
-.add-row input.unit-input{flex:1;}
-.add-btn{
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:var(--accent);
-  color:var(--accent-ink);
-  font-size:14px;
-  font-weight:600;
-  cursor:pointer;
-  font-family:'Inter',sans-serif;
-}
-.custom-tag{
-  font-size:10px;
+.today-tag{
+  font-family:var(--sans);
+  font-size:9.5px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
   color:var(--accent);
-  border:1px solid var(--accent);
+  background:var(--accent-tint);
+  padding:2px 6px;
   border-radius:5px;
-  padding:1px 5px;
-  margin-left:6px;
+}
+.day-sub{
+  display:block;
+  font-size:12.5px;
+  color:var(--ink-faint);
+  margin-top:2px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.chev{
+  flex:0 0 auto;
+  width:18px;height:18px;
+  color:var(--ink-faint);
+  transition:transform .26s cubic-bezier(.4,0,.2,1);
+}
+.day.open .chev{transform:rotate(180deg);}
+.day-body{
+  display:grid;
+  grid-template-rows:0fr;
+  transition:grid-template-rows .28s cubic-bezier(.4,0,.2,1);
+}
+.day.open .day-body{grid-template-rows:1fr;}
+.day-body-in{overflow:hidden;min-height:0;}
+.day-body-pad{padding:2px 14px 14px;}
+
+.dish{
+  border-top:1px solid var(--line);
+  padding-top:11px;
+  margin-top:11px;
+}
+.dish:first-child{border-top:0;margin-top:0;padding-top:2px;}
+.dish-head{display:flex;align-items:baseline;gap:8px;margin-bottom:7px;}
+.dish-name{
+  flex:1;
+  font-weight:600;
+  font-size:14.5px;
+  margin:0;
+  letter-spacing:-.005em;
+}
+.icon-btn{
+  flex:0 0 auto;
+  border:1px solid var(--line);
+  background:var(--card-2);
+  color:var(--ink-soft);
+  border-radius:7px;
+  padding:4px 8px;
+  font-size:11.5px;
+  font-weight:600;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.icon-btn svg{width:12px;height:12px;}
+.icon-btn:active{background:var(--line);}
+
+.ings{list-style:none;margin:0;padding:0;display:grid;gap:3px;}
+.ing{
+  display:grid;
+  grid-template-columns:62px 1fr;
+  gap:10px;
+  align-items:baseline;
+  font-size:13.5px;
+}
+.ing .q{
+  color:var(--ink);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  text-align:right;
+  white-space:nowrap;
+}
+.ing .q.none{color:var(--ink-faint);font-weight:400;}
+.ing .n{color:var(--ink-soft);}
+.dot{
+  display:inline-block;
+  width:5px;height:5px;
+  border-radius:50%;
+  background:var(--wheat);
+  margin-left:5px;
   vertical-align:middle;
 }
-.empty-note{
-  font-size:13px;
-  color:var(--ink-soft);
-  text-align:center;
-  padding:24px 0;
-}
 
-.edit-dish{
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:10px;
-  margin-bottom:10px;
-  background:var(--bg);
-}
-.edit-dish-head{
-  display:flex;
-  gap:6px;
-  margin-bottom:8px;
-  align-items:center;
-}
-.edit-dish-head input{
-  flex:1;
-  font-weight:600;
-  font-size:13px;
-  padding:7px 9px;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--surface);
-  color:var(--ink);
-  font-family:'Inter',sans-serif;
-  min-width:0;
-}
-.edit-ing-row{
-  display:flex;
-  gap:6px;
-  margin-bottom:6px;
-  align-items:center;
-}
-.edit-ing-row input{
-  padding:6px 7px;
-  border:1px solid var(--line);
-  border-radius:7px;
-  background:var(--surface);
-  color:var(--ink);
-  font-size:12px;
-  font-family:'Inter',sans-serif;
-  min-width:0;
-}
-.edit-ing-row .ei-item{flex:3;}
-.edit-ing-row .ei-qty{flex:1;}
-.edit-ing-row .ei-unit{flex:1;}
-.small-btn{
-  border:1px solid var(--line);
-  background:var(--surface);
-  color:var(--ink-soft);
-  font-size:12px;
-  font-weight:600;
-  padding:6px 10px;
-  border-radius:7px;
-  cursor:pointer;
-}
-.small-btn.danger{color:var(--danger);border-color:var(--danger);}
-.edit-dish-actions{
-  display:flex;
-  gap:8px;
-  margin-top:4px;
-}
-.add-dish-btn{
+.add-dish{
   width:100%;
+  margin-top:12px;
   padding:9px;
-  border:1px dashed var(--muted);
-  border-radius:9px;
-  background:none;
+  border:1px dashed var(--line-strong);
+  border-radius:var(--r-sm);
+  background:transparent;
   color:var(--ink-soft);
   font-size:13px;
   font-weight:600;
-  cursor:pointer;
-  font-family:'Inter',sans-serif;
+}
+.add-dish:active{background:var(--card-2);}
+
+/* ---------- shopping view ---------- */
+.progress-card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:14px;
+  margin-bottom:12px;
+  box-shadow:var(--shadow);
+}
+.progress-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.progress-num{
+  font-family:var(--serif);
+  font-size:24px;
+  font-weight:700;
+  line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.progress-num span{font-size:14px;color:var(--ink-faint);font-weight:500;}
+.linkbtn{
+  border:0;background:transparent;
+  color:var(--accent);
+  font-size:12.5px;font-weight:600;
+  padding:2px;
+}
+.bar{height:5px;background:var(--card-2);border-radius:99px;overflow:hidden;border:1px solid var(--line);}
+.bar i{display:block;height:100%;background:var(--brand);transition:width .3s ease;}
+.filters{display:flex;gap:8px;margin-top:12px;}
+.toggle{
+  flex:1;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  border:1px solid var(--line);
+  background:var(--card-2);
+  color:var(--ink-soft);
+  border-radius:var(--r-sm);
+  padding:7px;
+  font-size:12.5px;font-weight:600;
+}
+.toggle[aria-pressed="true"]{background:var(--brand);color:var(--brand-on);border-color:var(--brand);}
+
+.sec{margin-bottom:16px;}
+.sec-head{
+  display:flex;align-items:baseline;gap:8px;
+  padding:0 2px 7px;
+}
+.sec-title{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.sec-count{
+  font-size:11px;
+  color:var(--ink-faint);
+  font-variant-numeric:tabular-nums;
+}
+.sec-rule{flex:1;height:1px;background:var(--line);}
+.rows{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.row{
+  display:flex;
+  align-items:center;
+  gap:11px;
+  padding:11px 13px;
+  border-top:1px solid var(--line);
+}
+.row:first-child{border-top:0;}
+.tick{
+  flex:0 0 auto;
+  width:23px;height:23px;
+  border-radius:50%;
+  border:1.5px solid var(--line-strong);
+  background:transparent;
+  display:grid;place-items:center;
+  padding:0;
+  transition:background .14s ease, border-color .14s ease;
+}
+.tick svg{width:13px;height:13px;color:var(--brand-on);opacity:0;}
+.tick[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);}
+.tick[aria-pressed="true"] svg{opacity:1;}
+.row-main{
+  flex:1;min-width:0;
+  display:flex;align-items:center;gap:8px;
+  background:transparent;border:0;padding:0;
+  text-align:left;
+}
+.row-name{
+  flex:1;min-width:0;
+  font-size:14px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.row.done .row-name{color:var(--ink-faint);text-decoration:line-through;}
+.row-qty{
+  flex:0 0 auto;
+  font-size:13px;
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  color:var(--ink-soft);
+  white-space:nowrap;
+}
+.row.done .row-qty{color:var(--ink-faint);}
+.row-chev{flex:0 0 auto;width:15px;height:15px;color:var(--ink-faint);}
+.tag{
+  flex:0 0 auto;
+  font-size:9.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 5px;border-radius:5px;
+}
+.tag.basic{color:var(--wheat);background:var(--wheat-tint);}
+.tag.mine{color:var(--accent);background:var(--accent-tint);}
+
+.addbox{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  padding:13px;
+  box-shadow:var(--shadow);
+}
+.addbox h3{
+  margin:0 0 10px;
+  font-size:11px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-soft);
+}
+.field{
+  width:100%;
+  padding:9px 11px;
+  border:1px solid var(--line);
+  border-radius:var(--r-sm);
+  background:var(--card-2);
+  color:var(--ink);
+  font-size:14px;
+}
+.field::placeholder{color:var(--ink-faint);}
+.addrow{display:flex;gap:8px;margin-top:8px;}
+.addrow .field{flex:1;min-width:0;}
+.btn{
+  border:0;border-radius:var(--r-sm);
+  padding:10px 16px;
+  font-weight:600;font-size:14px;
+  background:var(--brand);color:var(--brand-on);
+}
+.btn.ghost{background:var(--card-2);color:var(--ink);border:1px solid var(--line);}
+.btn.danger{background:transparent;color:var(--danger);border:1px solid var(--danger);}
+.btn:active{transform:scale(.985);}
+.btn.full{width:100%;}
+
+.empty{
+  text-align:center;
+  padding:34px 20px;
+  color:var(--ink-faint);
+  font-size:13.5px;
 }
 
-nav.tabbar{
+/* ---------- tab bar ---------- */
+.tabbar{
   position:fixed;
-  bottom:0;
-  left:0;
-  right:0;
-  background:var(--surface);
+  left:0;right:0;bottom:0;
+  z-index:20;
+  background:color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
   border-top:1px solid var(--line);
-  display:flex;
-  padding:6px 0 max(6px, env(safe-area-inset-bottom));
-  z-index:10;
+  padding:0 0 env(safe-area-inset-bottom, 0px);
 }
+.tabbar-in{max-width:520px;margin:0 auto;display:flex;padding:7px 16px 8px;gap:8px;}
 .tab{
   flex:1;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:2px;
-  background:none;
-  border:none;
-  color:var(--muted);
-  font-family:'Inter',sans-serif;
-  font-size:11px;
-  font-weight:600;
-  padding:6px 0;
-  cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  border:0;background:transparent;
+  color:var(--ink-faint);
+  font-size:11px;font-weight:600;
+  padding:5px 0;
+  border-radius:10px;
 }
-.tab.active{color:var(--primary);}
-.tab-icon{
-  width:20px;
-  height:20px;
+.tab svg{width:21px;height:21px;}
+.tab[aria-selected="true"]{color:var(--brand);}
+
+/* ---------- sheet ---------- */
+.scrim{
+  position:fixed;inset:0;z-index:40;
+  background:rgba(12,16,13,.45);
+  opacity:0;transition:opacity .22s ease;
+}
+.scrim.on{opacity:1;}
+.sheet{
+  position:fixed;
+  left:0;right:0;bottom:0;
+  z-index:41;
+  background:var(--card);
+  border-top:1px solid var(--line);
+  border-radius:20px 20px 0 0;
+  max-height:86vh;
+  overflow-y:auto;
+  transform:translateY(100%);
+  transition:transform .28s cubic-bezier(.32,.72,0,1);
+  padding:0 0 calc(18px + env(safe-area-inset-bottom, 0px));
+}
+.sheet.on{transform:translateY(0);}
+.sheet-in{max-width:520px;margin:0 auto;padding:0 16px;}
+.grab{width:34px;height:4px;border-radius:99px;background:var(--line-strong);margin:9px auto 4px;}
+.sheet-head{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:6px 0 14px;
+}
+.sheet-title{
+  flex:1;
+  font-family:var(--serif);
+  font-size:20px;font-weight:700;
+  line-height:1.2;margin:0;
+  text-wrap:balance;
+}
+.sheet-sub{font-size:12.5px;color:var(--ink-faint);margin:3px 0 0;}
+.close{
+  flex:0 0 auto;
+  width:30px;height:30px;
+  border-radius:50%;
+  border:1px solid var(--line);
+  background:var(--card-2);
+  color:var(--ink-soft);
+  display:grid;place-items:center;
+  padding:0;
+}
+.close svg{width:14px;height:14px;}
+
+.block{
+  border:1px solid var(--line);
+  border-radius:var(--r);
+  background:var(--card-2);
+  padding:12px;
+  margin-bottom:12px;
+}
+.block-label{
+  font-size:10.5px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-faint);
+  margin:0 0 9px;
+}
+.origin{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:10px;
+  align-items:baseline;
+  padding:8px 0;
+  border-top:1px solid var(--line);
+  font-size:13.5px;
+}
+.origin:first-of-type{border-top:0;padding-top:0;}
+.origin .od{
+  font-family:var(--serif);
+  font-weight:600;
+  color:var(--brand);
+  font-size:13px;
+}
+.origin .op{color:var(--ink);min-width:0;}
+.origin .oq{
+  color:var(--ink-soft);
+  font-weight:600;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.qtyrow{display:flex;gap:8px;align-items:center;}
+.qtyrow .field{flex:1;}
+.sheet-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+
+.ed-row{display:flex;gap:7px;margin-bottom:7px;align-items:center;}
+.ed-row .f-item{flex:3;min-width:0;}
+.ed-row .f-qty{flex:1.1;min-width:0;}
+.ed-row .f-unit{flex:1.2;min-width:0;}
+.ed-row .field{padding:8px 9px;font-size:13px;}
+.del-x{
+  flex:0 0 auto;
+  width:28px;height:28px;
+  border:0;background:transparent;
+  color:var(--ink-faint);
+  display:grid;place-items:center;
+  border-radius:7px;
+  padding:0;
+}
+.del-x svg{width:14px;height:14px;}
+.del-x:active{background:var(--accent-tint);color:var(--danger);}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition-duration:.01ms!important;animation-duration:.01ms!important;}
 }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <img class="brand-mark" src="icon-192.png" alt="" width="42" height="42">
-      <div>
-        <h1>Vianda</h1>
-        <p id="week-label">Semana 1</p>
+
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="brandrow">
+      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
+        <rect width="64" height="64" rx="15" fill="var(--brand)"/>
+        <path d="M20 27a12 12 0 0 1 24 0" fill="none" stroke="var(--brand-on)" stroke-width="3.4" stroke-linecap="round"/>
+        <path d="M14.5 27h35l-4 21a2.5 2.5 0 0 1-2.5 2h-22a2.5 2.5 0 0 1-2.5-2z" fill="var(--brand-on)"/>
+        <path d="M26 33.5v11M32 33.5v11M38 33.5v11" stroke="var(--brand)" stroke-width="2.2" stroke-linecap="round" opacity=".5"/>
+      </svg>
+      <div class="brandtext">
+        <h1 class="wordmark">Vianda</h1>
+        <p class="tagline" id="tagline">Menú de 4 semanas</p>
       </div>
+      <button class="theme-btn" id="themeBtn" aria-label="Cambiar tema">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
+        </svg>
+      </button>
     </div>
-    <button class="edit-toggle" id="edit-toggle">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-      <span id="edit-toggle-label">Editar</span>
+    <div class="weeks">
+      <span class="weeks-label">Semana</span>
+      <div class="seg" id="weekSeg" role="group" aria-label="Elegir semana"></div>
+    </div>
+  </div>
+</header>
+
+<main class="shell">
+  <section class="view" id="viewMenu"></section>
+  <section class="view" id="viewShop" hidden></section>
+</main>
+
+<nav class="tabbar" role="tablist" aria-label="Secciones">
+  <div class="tabbar-in">
+    <button class="tab" id="tabMenu" role="tab" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <rect x="4" y="3.5" width="16" height="17" rx="2.5"/>
+        <path d="M8 8.5h8M8 12h8M8 15.5h5" stroke-linecap="round"/>
+      </svg>
+      Menú
     </button>
-  </header>
-
-  <div class="weeks" id="weeks"></div>
-  <button class="restore-link" id="restore-link" style="display:none;">Restablecer menú original</button>
-
-  <section class="view active" id="view-menu"></section>
-
-  <section class="view" id="view-shop">
-    <div class="list-summary">
-      <span class="count" id="shop-count">0 de 0 comprados</span>
-      <button class="reset-btn" id="reset-checks">Desmarcar todo</button>
-    </div>
-    <label class="hide-basics-row">
-      <input type="checkbox" id="hide-basics-check">
-      Ocultar básicos (ingredientes que ya sueles tener)
-    </label>
-    <div id="shop-list"></div>
-    <div class="add-form">
-      <div class="add-form-title">Añadir producto</div>
-      <div class="add-row">
-        <input type="text" class="name-input" id="new-item-name" placeholder="Nombre del producto">
-      </div>
-      <div class="add-row">
-        <input type="number" class="qty-input-form" id="new-item-qty" placeholder="Cantidad" min="0" step="any">
-        <input type="text" class="unit-input" id="new-item-unit" placeholder="Unidad (g, ud...)">
-      </div>
-      <button class="add-btn" id="add-item-btn">Añadir a la lista</button>
-    </div>
-  </section>
-</div>
-
-<nav class="tabbar">
-  <button class="tab active" data-view="menu">
-    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
-    Menú
-  </button>
-  <button class="tab" data-view="shop">
-    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.6 9.6a2 2 0 0 0 2 1.7h7.4a2 2 0 0 0 2-1.6L20.5 9H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
-    Compra
-  </button>
+    <button class="tab" id="tabShop" role="tab" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true">
+        <path d="M8 9a4 4 0 0 1 8 0" stroke-linecap="round"/>
+        <path d="M3.8 9h16.4l-2 10.2a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6z" stroke-linejoin="round"/>
+      </svg>
+      Compra
+    </button>
+  </div>
 </nav>
 
+<div class="scrim" id="scrim" hidden></div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" hidden tabindex="-1">
+  <div class="grab"></div>
+  <div class="sheet-in" id="sheetIn"></div>
+</div>
+
 <script>
-const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+"use strict";
 
-function ing(qty, unit, item){ return {qty, unit, item}; }
+/* ====================== datos ====================== */
+const DAYS=[
+  {full:"Lunes",ini:"L"},{full:"Martes",ini:"M"},{full:"Miércoles",ini:"X"},
+  {full:"Jueves",ini:"J"},{full:"Viernes",ini:"V"},{full:"Sábado",ini:"S"},{full:"Domingo",ini:"D"}
+];
+function ing(qty,unit,item){return {qty,unit,item};}
 
-const DEFAULT_MENU = [
+const DEFAULT_MENU=[
 [
   {dishes:[
     {name:"Puré de verdura", ingredients:[ing(300,"g","verduras variadas (patata, zanahoria, puerro, calabacín)"),ing(1,"diente","ajo"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]},
@@ -704,7 +801,7 @@ const DEFAULT_MENU = [
     {name:"Nuggets de pollo y aritos de cebolla", ingredients:[ing(10,"ud","nuggets de pollo"),ing(1,"ud","cebolla grande"),ing(null,null,"harina"),ing(null,null,"huevo"),ing(null,null,"pan rallado")]}
   ]},
   {dishes:[
-    {name:"Japonés / Chino", ingredients:[ing(null,null,"plato variable — añade aquí tus propios ingredientes según la receta elegida")]}
+    {name:"Japonés / Chino", ingredients:[ing(null,null,"plato variable — añade aquí tus propios ingredientes")]}
   ]},
   {dishes:[
     {name:"Super hamburguesa (smash)", ingredients:[ing(300,"g","carne picada de ternera (2 hamburguesas smash)"),ing(2,"ud","panes de brioche"),ing(null,null,"queso cheddar"),ing(null,null,"cebolla"),ing(null,null,"salsa especial (mayonesa + ketchup + mostaza)"),ing(null,null,"pepinillos")]}
@@ -712,438 +809,699 @@ const DEFAULT_MENU = [
 ]
 ];
 
-const MENU_STORAGE_KEY = "menuCompraApp_menuData_v1";
-const BASICS_STORAGE_KEY = "menuCompraApp_basicOverrides_v1";
-const HIDE_BASICS_KEY = "menuCompraApp_hideBasics_v1";
-const STORAGE_PREFIX = "menuCompraApp_week";
+/* ====================== secciones de supermercado ====================== */
+const SECTIONS=[
+  {id:"verdura",  label:"Frutería y verdura"},
+  {id:"carne",    label:"Carnicería"},
+  {id:"pescado",  label:"Pescadería"},
+  {id:"lacteos",  label:"Huevos y lácteos"},
+  {id:"panaderia",label:"Panadería"},
+  {id:"despensa", label:"Despensa"},
+  {id:"otros",    label:"Otros"}
+];
+const RULES=[
+  [/(caldo|tomate frito|salsa|aceite|vinagre|mayonesa|alioli|ketchup|mostaza|harina|pan rallado|pimenton|\bsal\b|pimienta|nuez moscada|vino|soja|patatas fritas|nachos|guacamole|jalapeno|pepinillo|guindilla|aceituna|croqueta|empanadilla|gnocchi)/,"despensa"],
+  [/(obleas|masa de pizza|brioche|pan de molde|\bpan\b|panes)/,"panaderia"],
+  [/(huevo|nata|leche|queso|mozzarella|parmesano|cheddar|mantequilla)/,"lacteos"],
+  [/(pescad|merluza|rape|dorada|boquer|sardina|almeja|gula|palometa|lubina|bacalao|calamar|gallo|atun|marisco)/,"pescado"],
+  [/(pollo|pavo|ternera|cerdo|jamon|bacon|panceta|morcilla|lomo|carne|alita|secreto|salchicha|chorizo|costilla|chuleta|pechuga|nugget|hamburguesa|york|raxo)/,"carne"],
+  [/(verdura|patata|zanahoria|puerro|calabac|\bajo\b|cebolla|tomate|lechuga|seta|calabaza|limon|pimiento|maiz|espinaca|brocoli|berenjena|guisante|jengibre|perejil|romero|shiitake)/,"verdura"],
+  [/(arroz|pasta|quinoa|fideo|noodle|lenteja|garbanzo|legumbre)/,"despensa"]
+];
+function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");}
+function sectionFor(item){
+  const s=norm(item);
+  for(const [re,id] of RULES){ if(re.test(s)) return id; }
+  return "otros";
+}
 
-function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+/* ====================== almacenamiento ====================== */
+const K_MENU="menuCompraApp_menuData_v1";
+const K_BASICS="menuCompraApp_basicOverrides_v1";
+const K_HIDE="menuCompraApp_hideBasics_v1";
+const K_WEEK="menuCompraApp_week";
+const K_THEME="menuCompraApp_theme_v1";
+
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
 let MENU;
-try{
-  const raw = localStorage.getItem(MENU_STORAGE_KEY);
-  MENU = raw ? JSON.parse(raw) : deepClone(DEFAULT_MENU);
-}catch(e){
-  MENU = deepClone(DEFAULT_MENU);
-}
+try{ const raw=lsGet(K_MENU); MENU = raw ? JSON.parse(raw) : clone(DEFAULT_MENU); }
+catch(e){ MENU = clone(DEFAULT_MENU); }
+if(!Array.isArray(MENU) || MENU.length!==4) MENU = clone(DEFAULT_MENU);
 
-function saveMenu(){
-  try{ localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(MENU)); }catch(e){}
-}
+function saveMenu(){ lsSet(K_MENU, JSON.stringify(MENU)); }
 
-function loadBasicOverrides(){
-  try{
-    const raw = localStorage.getItem(BASICS_STORAGE_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return {};
+function loadBasics(){ try{ return JSON.parse(lsGet(K_BASICS)) || {}; }catch(e){ return {}; } }
+function saveBasics(o){ lsSet(K_BASICS, JSON.stringify(o)); }
+
+function weekState(w){
+  try{ const r=lsGet(K_WEEK+w); if(r) return JSON.parse(r); }catch(e){}
+  return {checked:{},overrides:{},removed:[],custom:[]};
 }
-function saveBasicOverrides(obj){
-  try{ localStorage.setItem(BASICS_STORAGE_KEY, JSON.stringify(obj)); }catch(e){}
-}
+function saveWeekState(w,s){ lsSet(K_WEEK+w, JSON.stringify(s)); }
+
+/* ====================== lógica ====================== */
+let week=0;
+let view="menu";
+const openDays=new Set();
+const todayIdx=(new Date().getDay()+6)%7;
+openDays.add(todayIdx);
 
 function weekCountFor(itemLower){
-  let count = 0;
-  for(let w=0; w<MENU.length; w++){
-    let found = false;
+  let n=0;
+  for(let w=0;w<MENU.length;w++){
+    let found=false;
     for(const day of MENU[w]){
       for(const dish of day.dishes){
-        for(const i2 of dish.ingredients){
-          if(i2.item.trim().toLowerCase() === itemLower){ found = true; break; }
+        for(const i of dish.ingredients){
+          if(norm(i.item)===itemLower){found=true;break;}
         }
-        if(found) break;
+        if(found)break;
       }
-      if(found) break;
+      if(found)break;
     }
-    if(found) count++;
+    if(found)n++;
   }
-  return count;
+  return n;
 }
-
 function isBasic(item){
-  const key = item.trim().toLowerCase();
-  const overrides = loadBasicOverrides();
-  if(overrides.hasOwnProperty(key)) return overrides[key];
-  return weekCountFor(key) >= 3;
+  const k=norm(item);
+  const ov=loadBasics();
+  if(Object.prototype.hasOwnProperty.call(ov,k)) return !!ov[k];
+  return weekCountFor(k)>=3;
 }
-
 function toggleBasic(item){
-  const key = item.trim().toLowerCase();
-  const overrides = loadBasicOverrides();
-  overrides[key] = !isBasic(item);
-  saveBasicOverrides(overrides);
+  const k=norm(item);
+  const ov=loadBasics();
+  ov[k]=!isBasic(item);
+  saveBasics(ov);
 }
 
-let currentWeek = 0;
-let currentView = "menu";
-let editingMenu = false;
+function keyOf(unit,item){ return (unit||"")+"::"+norm(item).trim(); }
 
-function storageKey(week){ return STORAGE_PREFIX + week; }
-
-function loadState(week){
-  try{
-    const raw = localStorage.getItem(storageKey(week));
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return {checked:{}, overrides:{}, removed:[], custom:[]};
-}
-
-function saveState(week, state){
-  try{ localStorage.setItem(storageKey(week), JSON.stringify(state)); }catch(e){}
-}
-
-function itemKey(unit, item){
-  return (unit||"") + "::" + item.trim().toLowerCase();
-}
-
-function buildBaseList(weekIdx){
-  const map = new Map();
-  MENU[weekIdx].forEach(day=>{
+function buildList(w){
+  const map=new Map();
+  MENU[w].forEach((day,dayIdx)=>{
     day.dishes.forEach(dish=>{
       dish.ingredients.forEach(i=>{
-        const key = itemKey(i.unit, i.item);
-        if(map.has(key)){
-          const existing = map.get(key);
-          if(existing.qty!=null && i.qty!=null){ existing.qty += i.qty; }
-        }else{
-          map.set(key, {key, qty:i.qty, unit:i.unit, item:i.item, custom:false});
+        if(!i.item || !String(i.item).trim()) return;
+        const k=norm(i.item).trim();
+        let e=map.get(k);
+        if(!e){
+          e={key:k,qty:null,unit:null,item:i.item,custom:false,origins:[]};
+          map.set(k,e);
         }
+        if(e.unit==null && i.unit) e.unit=i.unit;
+        if(i.qty!=null && (i.unit||null)===(e.unit||null)) e.qty=(e.qty||0)+i.qty;
+        e.origins.push({day:dayIdx,dish:dish.name,qty:i.qty,unit:i.unit});
       });
     });
   });
-  return Array.from(map.values());
+  return [...map.values()];
 }
 
-function renderWeekPills(){
-  const el = document.getElementById("weeks");
-  el.innerHTML = "";
-  for(let w=0; w<4; w++){
-    const btn = document.createElement("div");
-    btn.className = "week-pill" + (w===currentWeek ? " active" : "");
-    btn.textContent = "Semana " + (w+1);
-    btn.addEventListener("click", ()=>{
-      currentWeek = w;
-      document.getElementById("week-label").textContent = "Semana " + (w+1);
-      renderWeekPills();
-      renderMenu();
-      renderShop();
-    });
-    el.appendChild(btn);
-  }
+function fmt(n){ return Math.round(n*100)/100; }
+function cap(s){ s=String(s||""); return s.charAt(0).toUpperCase()+s.slice(1); }
+function unitText(q,u){
+  if(!u) return "";
+  if(u==="diente" && q!=null && q!==1) return "dientes";
+  return u;
+}
+function qtyText(q,u){
+  if(q==null) return "";
+  return fmt(q)+(u?" "+unitText(q,u):"");
 }
 
-function formatQty(n){ return Math.round(n*100)/100; }
-function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
-
-function basicPillHtml(item, clickable){
-  if(!isBasic(item)) return "";
-  return `<span class="basic-pill${clickable?" clickable":""}" data-item="${item.replace(/"/g,'&quot;')}" title="Ingrediente básico: aparece en varias semanas o lo has marcado tú">básico</span>`;
-}
-
+/* ====================== render: menú ====================== */
 function renderMenu(){
-  const el = document.getElementById("view-menu");
-  el.innerHTML = "";
-  document.getElementById("restore-link").style.display = editingMenu ? "block" : "none";
+  const host=document.getElementById("viewMenu");
+  host.textContent="";
+  const frag=document.createDocumentFragment();
 
-  MENU[currentWeek].forEach((day, dayIdx)=>{
-    const card = document.createElement("div");
-    card.className = "day-card" + (editingMenu ? " open" : "");
-    const dishNames = day.dishes.map(d=>d.name).join(" · ");
-    card.innerHTML = `
-      <div class="day-head">
-        <div>
-          <div class="day-name">${DAYS[dayIdx]}</div>
-          <div class="day-sub">${dishNames}</div>
-        </div>
-        <div class="day-chev">&#9660;</div>
-      </div>
-      <div class="day-body"><div class="day-body-inner"></div></div>
-    `;
-    const head = card.querySelector(".day-head");
-    head.addEventListener("click", ()=>{
-      if(editingMenu) return;
-      card.classList.toggle("open");
-    });
-    const body = card.querySelector(".day-body-inner");
+  MENU[week].forEach((day,dayIdx)=>{
+    const art=document.createElement("article");
+    art.className="day"+(openDays.has(dayIdx)?" open":"")+(dayIdx>=5?" wknd":"");
 
-    if(editingMenu){
-      day.dishes.forEach((dish, dishIdx)=>{
-        const dishEl = document.createElement("div");
-        dishEl.className = "edit-dish";
+    const head=document.createElement("button");
+    head.className="day-head";
+    head.setAttribute("aria-expanded", openDays.has(dayIdx)?"true":"false");
 
-        const head2 = document.createElement("div");
-        head2.className = "edit-dish-head";
-        const nameInput = document.createElement("input");
-        nameInput.value = dish.name;
-        nameInput.addEventListener("change", ()=>{
-          dish.name = nameInput.value.trim() || "Plato sin nombre";
-          saveMenu();
-          renderMenu();
-        });
-        const delDishBtn = document.createElement("button");
-        delDishBtn.className = "small-btn danger";
-        delDishBtn.textContent = "Eliminar plato";
-        delDishBtn.addEventListener("click", ()=>{
-          if(confirm("¿Eliminar este plato del día?")){
-            day.dishes.splice(dishIdx, 1);
-            saveMenu();
-            renderMenu();
-            renderShop();
-          }
-        });
-        head2.appendChild(nameInput);
-        head2.appendChild(delDishBtn);
-        dishEl.appendChild(head2);
+    const chip=document.createElement("span");
+    chip.className="chip";
+    chip.textContent=DAYS[dayIdx].ini;
 
-        dish.ingredients.forEach((i, ingIdx)=>{
-          const row = document.createElement("div");
-          row.className = "edit-ing-row";
-          row.innerHTML = `
-            <input class="ei-item" placeholder="Ingrediente">
-            <input class="ei-qty" type="number" step="any" placeholder="Cant.">
-            <input class="ei-unit" placeholder="Unidad">
-          `;
-          const itemInput = row.querySelector(".ei-item");
-          const qtyInput = row.querySelector(".ei-qty");
-          const unitInput = row.querySelector(".ei-unit");
-          itemInput.value = i.item;
-          qtyInput.value = i.qty!=null ? i.qty : "";
-          unitInput.value = i.unit || "";
-          itemInput.addEventListener("change", ()=>{ i.item = itemInput.value.trim(); saveMenu(); renderShop(); });
-          qtyInput.addEventListener("change", ()=>{
-            const v = qtyInput.value.trim();
-            i.qty = v==="" ? null : parseFloat(v);
-            saveMenu(); renderShop();
-          });
-          unitInput.addEventListener("change", ()=>{ i.unit = unitInput.value.trim() || null; saveMenu(); renderShop(); });
-
-          const delIngBtn = document.createElement("button");
-          delIngBtn.className = "del-btn";
-          delIngBtn.innerHTML = "&#10005;";
-          delIngBtn.setAttribute("aria-label","Eliminar ingrediente");
-          delIngBtn.addEventListener("click", ()=>{
-            dish.ingredients.splice(ingIdx, 1);
-            saveMenu(); renderMenu(); renderShop();
-          });
-          row.appendChild(delIngBtn);
-          dishEl.appendChild(row);
-        });
-
-        const actions = document.createElement("div");
-        actions.className = "edit-dish-actions";
-        const addIngBtn = document.createElement("button");
-        addIngBtn.className = "small-btn";
-        addIngBtn.textContent = "+ Ingrediente";
-        addIngBtn.addEventListener("click", ()=>{
-          dish.ingredients.push({qty:null, unit:null, item:""});
-          saveMenu(); renderMenu();
-        });
-        actions.appendChild(addIngBtn);
-        dishEl.appendChild(actions);
-
-        body.appendChild(dishEl);
-      });
-
-      const addDishBtn = document.createElement("button");
-      addDishBtn.className = "add-dish-btn";
-      addDishBtn.textContent = "+ Añadir plato a " + DAYS[dayIdx];
-      addDishBtn.addEventListener("click", ()=>{
-        day.dishes.push({name:"Nuevo plato", ingredients:[]});
-        saveMenu(); renderMenu();
-      });
-      body.appendChild(addDishBtn);
-
-    }else{
-      day.dishes.forEach(dish=>{
-        const dishEl = document.createElement("div");
-        dishEl.className = "dish";
-        const ul = document.createElement("ul");
-        ul.className = "ing-list";
-        dish.ingredients.forEach(i=>{
-          const li = document.createElement("li");
-          const text = i.qty!=null ? `${formatQty(i.qty)} ${i.unit||""} de ${i.item}`.replace(/\s+/g," ") : capitalize(i.item);
-          li.innerHTML = text + basicPillHtml(i.item, false);
-          ul.appendChild(li);
-        });
-        const title = document.createElement("div");
-        title.className = "dish-name";
-        title.textContent = dish.name;
-        dishEl.appendChild(title);
-        dishEl.appendChild(ul);
-        body.appendChild(dishEl);
-      });
+    const meta=document.createElement("span");
+    meta.className="day-meta";
+    const nm=document.createElement("span");
+    nm.className="day-name";
+    nm.append(document.createTextNode(DAYS[dayIdx].full));
+    if(dayIdx===todayIdx){
+      const t=document.createElement("span");
+      t.className="today-tag"; t.textContent="hoy";
+      nm.appendChild(t);
     }
+    const sub=document.createElement("span");
+    sub.className="day-sub";
+    sub.textContent = day.dishes.length ? day.dishes.map(d=>d.name).join(" · ") : "Sin platos";
+    meta.append(nm,sub);
 
-    el.appendChild(card);
+    const chev=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    chev.setAttribute("class","chev");
+    chev.setAttribute("viewBox","0 0 24 24");
+    chev.setAttribute("fill","none");
+    chev.setAttribute("stroke","currentColor");
+    chev.setAttribute("stroke-width","2");
+    chev.setAttribute("stroke-linecap","round");
+    chev.innerHTML='<path d="m6 9 6 6 6-6"/>';
+
+    head.append(chip,meta,chev);
+    head.addEventListener("click",()=>{
+      if(openDays.has(dayIdx)) openDays.delete(dayIdx); else openDays.add(dayIdx);
+      art.classList.toggle("open");
+      head.setAttribute("aria-expanded", openDays.has(dayIdx)?"true":"false");
+    });
+
+    const body=document.createElement("div");
+    body.className="day-body";
+    const bin=document.createElement("div");
+    bin.className="day-body-in";
+    const pad=document.createElement("div");
+    pad.className="day-body-pad";
+
+    day.dishes.forEach((dish,dishIdx)=>{
+      const d=document.createElement("div");
+      d.className="dish";
+
+      const dh=document.createElement("div");
+      dh.className="dish-head";
+      const h3=document.createElement("h3");
+      h3.className="dish-name";
+      h3.textContent=dish.name;
+      const eb=document.createElement("button");
+      eb.className="icon-btn";
+      eb.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>Editar';
+      eb.addEventListener("click",()=>openDishSheet(dayIdx,dishIdx));
+      dh.append(h3,eb);
+
+      const ul=document.createElement("ul");
+      ul.className="ings";
+      dish.ingredients.forEach(i=>{
+        const li=document.createElement("li");
+        li.className="ing";
+        const q=document.createElement("span");
+        const qt=qtyText(i.qty,i.unit);
+        q.className="q"+(qt?"":" none");
+        q.textContent=qt;
+        const n=document.createElement("span");
+        n.className="n";
+        n.textContent=cap(i.item);
+        if(isBasic(i.item)){
+          const dot=document.createElement("span");
+          dot.className="dot";
+          dot.title="Básico de despensa";
+          n.appendChild(dot);
+        }
+        li.append(q,n);
+        ul.appendChild(li);
+      });
+
+      d.append(dh,ul);
+      pad.appendChild(d);
+    });
+
+    const add=document.createElement("button");
+    add.className="add-dish";
+    add.textContent="+ Añadir plato a "+DAYS[dayIdx].full.toLowerCase();
+    add.addEventListener("click",()=>{
+      MENU[week][dayIdx].dishes.push({name:"Nuevo plato",ingredients:[]});
+      saveMenu();
+      openDays.add(dayIdx);
+      renderMenu();
+      openDishSheet(dayIdx, MENU[week][dayIdx].dishes.length-1);
+    });
+    pad.appendChild(add);
+
+    bin.appendChild(pad);
+    body.appendChild(bin);
+    art.append(head,body);
+    frag.appendChild(art);
   });
+
+  host.appendChild(frag);
 }
 
+/* ====================== render: compra ====================== */
 function renderShop(){
-  const state = loadState(currentWeek);
-  const base = buildBaseList(currentWeek);
-  const filtered = base.filter(i => !state.removed.includes(i.key));
-  filtered.forEach(i=>{
-    if(state.overrides.hasOwnProperty(i.key)){ i.qty = state.overrides[i.key]; }
+  const host=document.getElementById("viewShop");
+  host.textContent="";
+  const st=weekState(week);
+  const base=buildList(week).filter(i=>!st.removed.includes(i.key));
+  base.forEach(i=>{ if(Object.prototype.hasOwnProperty.call(st.overrides,i.key)) i.qty=st.overrides[i.key]; });
+  const custom=(st.custom||[]).map(c=>({...c,custom:true,origins:[]}));
+  let all=base.concat(custom);
+
+  const hide = lsGet(K_HIDE)==="1";
+  const visible = hide ? all.filter(i=>!isBasic(i.item)) : all;
+
+  const done=visible.filter(i=>st.checked[i.key]).length;
+  const pct = visible.length ? Math.round(done/visible.length*100) : 0;
+
+  /* --- tarjeta de progreso --- */
+  const card=document.createElement("div");
+  card.className="progress-card";
+  const top=document.createElement("div");
+  top.className="progress-top";
+  const num=document.createElement("div");
+  num.className="progress-num";
+  num.innerHTML=done+' <span>de '+visible.length+' comprados</span>';
+  const reset=document.createElement("button");
+  reset.className="linkbtn";
+  reset.textContent="Desmarcar todo";
+  reset.addEventListener("click",()=>{
+    const s=weekState(week); s.checked={}; saveWeekState(week,s); renderShop();
   });
-  const custom = (state.custom||[]).map(c=>({...c, custom:true}));
-  let all = filtered.concat(custom);
+  top.append(num,reset);
 
-  const hideBasics = localStorage.getItem(HIDE_BASICS_KEY) === "1";
-  document.getElementById("hide-basics-check").checked = hideBasics;
-  if(hideBasics){
-    all = all.filter(i => !isBasic(i.item));
+  const bar=document.createElement("div");
+  bar.className="bar";
+  const fill=document.createElement("i");
+  fill.style.width=pct+"%";
+  bar.appendChild(fill);
+
+  const filters=document.createElement("div");
+  filters.className="filters";
+  const tb=document.createElement("button");
+  tb.className="toggle";
+  tb.setAttribute("aria-pressed", hide?"true":"false");
+  tb.textContent = hide ? "Básicos ocultos" : "Ocultar básicos";
+  tb.addEventListener("click",()=>{ lsSet(K_HIDE, hide?"0":"1"); renderShop(); });
+  filters.appendChild(tb);
+
+  card.append(top,bar,filters);
+  host.appendChild(card);
+
+  /* --- secciones --- */
+  if(!visible.length){
+    const e=document.createElement("div");
+    e.className="empty";
+    e.textContent = hide ? "Todo lo de esta semana son básicos que ya tienes." : "No hay nada en la lista de esta semana.";
+    host.appendChild(e);
   }
 
-  const listEl = document.getElementById("shop-list");
-  listEl.innerHTML = "";
+  SECTIONS.forEach(sec=>{
+    const items=visible.filter(i=>sectionFor(i.item)===sec.id);
+    if(!items.length) return;
 
-  if(all.length === 0){
-    listEl.innerHTML = `<div class="empty-note">No hay productos en esta lista.</div>`;
-  }
+    const wrap=document.createElement("section");
+    wrap.className="sec";
 
-  all.forEach(i=>{
-    const key = i.key;
-    const isChecked = !!state.checked[key];
-    const row = document.createElement("div");
-    row.className = "shop-row" + (isChecked ? " checked" : "");
+    const sh=document.createElement("div");
+    sh.className="sec-head";
+    const st1=document.createElement("span");
+    st1.className="sec-title"; st1.textContent=sec.label;
+    const rule=document.createElement("span"); rule.className="sec-rule";
+    const cnt=document.createElement("span");
+    cnt.className="sec-count";
+    cnt.textContent=items.filter(i=>st.checked[i.key]).length+"/"+items.length;
+    sh.append(st1,rule,cnt);
 
-    const check = document.createElement("button");
-    check.className = "check" + (isChecked ? " checked" : "");
-    check.innerHTML = isChecked ? "&#10003;" : "";
-    check.addEventListener("click", ()=>{
-      const st = loadState(currentWeek);
-      st.checked[key] = !st.checked[key];
-      saveState(currentWeek, st);
-      renderShop();
-    });
+    const rows=document.createElement("div");
+    rows.className="rows";
 
-    const nameWrap = document.createElement("div");
-    nameWrap.className = "shop-item";
-    const nameEl = document.createElement("div");
-    nameEl.className = "shop-item-name";
-    nameEl.innerHTML = capitalize(i.item) + (i.custom ? '<span class="custom-tag">tuyo</span>' : "") + basicPillHtml(i.item, true);
-    nameWrap.appendChild(nameEl);
-    const badge = nameEl.querySelector(".basic-pill");
-    if(badge){
-      badge.addEventListener("click", ()=>{
-        toggleBasic(i.item);
+    items.forEach(i=>{
+      const checked=!!st.checked[i.key];
+      const row=document.createElement("div");
+      row.className="row"+(checked?" done":"");
+
+      const tick=document.createElement("button");
+      tick.className="tick";
+      tick.setAttribute("aria-pressed",checked?"true":"false");
+      tick.setAttribute("aria-label",(checked?"Desmarcar ":"Marcar ")+i.item);
+      tick.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg>';
+      tick.addEventListener("click",()=>{
+        const s=weekState(week);
+        s.checked[i.key]=!s.checked[i.key];
+        saveWeekState(week,s);
         renderShop();
       });
-    }
 
-    row.appendChild(check);
-    row.appendChild(nameWrap);
-
-    if(i.qty!=null){
-      const qtyInput = document.createElement("input");
-      qtyInput.type = "number";
-      qtyInput.className = "qty-input";
-      qtyInput.value = formatQty(i.qty);
-      qtyInput.step = "any";
-      qtyInput.min = "0";
-      qtyInput.addEventListener("change", ()=>{
-        const val = parseFloat(qtyInput.value);
-        const st = loadState(currentWeek);
-        if(i.custom){
-          const c = st.custom.find(x=>x.key===key);
-          if(c) c.qty = isNaN(val) ? null : val;
-        }else{
-          st.overrides[key] = isNaN(val) ? 0 : val;
-        }
-        saveState(currentWeek, st);
-      });
-      row.appendChild(qtyInput);
-      const unitEl = document.createElement("span");
-      unitEl.className = "unit-label";
-      unitEl.textContent = i.unit || "";
-      row.appendChild(unitEl);
-    }
-
-    const delBtn = document.createElement("button");
-    delBtn.className = "del-btn";
-    delBtn.innerHTML = "&#10005;";
-    delBtn.setAttribute("aria-label", "Eliminar producto");
-    delBtn.addEventListener("click", ()=>{
-      const st = loadState(currentWeek);
+      const main=document.createElement("button");
+      main.className="row-main";
+      main.setAttribute("aria-label","Ver detalle de "+i.item);
+      const nm=document.createElement("span");
+      nm.className="row-name";
+      nm.textContent=cap(i.item);
+      main.appendChild(nm);
       if(i.custom){
-        st.custom = st.custom.filter(x=>x.key!==key);
-      }else{
-        st.removed.push(key);
+        const t=document.createElement("span"); t.className="tag mine"; t.textContent="tuyo"; main.appendChild(t);
+      }else if(isBasic(i.item)){
+        const t=document.createElement("span"); t.className="tag basic"; t.textContent="básico"; main.appendChild(t);
       }
-      delete st.checked[key];
-      saveState(currentWeek, st);
-      renderShop();
-    });
-    row.appendChild(delBtn);
+      const q=document.createElement("span");
+      q.className="row-qty";
+      q.textContent=qtyText(i.qty,i.unit);
+      main.appendChild(q);
+      const ch=document.createElement("span");
+      ch.className="row-chev";
+      ch.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>';
+      main.appendChild(ch);
+      main.addEventListener("click",()=>openIngredientSheet(i));
 
-    listEl.appendChild(row);
+      row.append(tick,main);
+      rows.appendChild(row);
+    });
+
+    wrap.append(sh,rows);
+    host.appendChild(wrap);
   });
 
-  const checkedCount = all.filter(i=>state.checked[i.key]).length;
-  document.getElementById("shop-count").textContent = `${checkedCount} de ${all.length} comprados`;
+  /* --- añadir producto --- */
+  const box=document.createElement("div");
+  box.className="addbox";
+  box.innerHTML=
+    '<h3>Añadir a la lista</h3>'+
+    '<input class="field" id="niName" type="text" placeholder="Por ejemplo: papel de cocina">'+
+    '<div class="addrow">'+
+      '<input class="field" id="niQty" type="number" inputmode="decimal" min="0" step="any" placeholder="Cant.">'+
+      '<input class="field" id="niUnit" type="text" placeholder="Unidad">'+
+      '<button class="btn" id="niAdd">Añadir</button>'+
+    '</div>';
+  host.appendChild(box);
+
+  document.getElementById("niAdd").addEventListener("click",()=>{
+    const nEl=document.getElementById("niName");
+    const qEl=document.getElementById("niQty");
+    const uEl=document.getElementById("niUnit");
+    const name=nEl.value.trim();
+    if(!name){ nEl.focus(); return; }
+    const s=weekState(week);
+    s.custom=s.custom||[];
+    s.custom.push({
+      key:"custom::"+Date.now()+"::"+norm(name),
+      item:name,
+      qty:qEl.value.trim()?parseFloat(qEl.value):null,
+      unit:uEl.value.trim()||null
+    });
+    saveWeekState(week,s);
+    renderShop();
+  });
 }
 
-document.getElementById("reset-checks").addEventListener("click", ()=>{
-  const st = loadState(currentWeek);
-  st.checked = {};
-  saveState(currentWeek, st);
-  renderShop();
-});
+/* ====================== sheet ====================== */
+const scrim=document.getElementById("scrim");
+const sheet=document.getElementById("sheet");
+const sheetIn=document.getElementById("sheetIn");
+let lastFocus=null;
 
-document.getElementById("hide-basics-check").addEventListener("change", (e)=>{
-  localStorage.setItem(HIDE_BASICS_KEY, e.target.checked ? "1" : "0");
-  renderShop();
-});
+function openSheet(build){
+  lastFocus=document.activeElement;
+  sheetIn.textContent="";
+  build(sheetIn);
+  scrim.hidden=false; sheet.hidden=false;
+  requestAnimationFrame(()=>{ scrim.classList.add("on"); sheet.classList.add("on"); });
+  sheet.focus();
+}
+function closeSheet(){
+  scrim.classList.remove("on"); sheet.classList.remove("on");
+  setTimeout(()=>{ scrim.hidden=true; sheet.hidden=true; sheetIn.textContent=""; },260);
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+scrim.addEventListener("click",closeSheet);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !sheet.hidden) closeSheet(); });
 
-document.getElementById("add-item-btn").addEventListener("click", ()=>{
-  const nameInput = document.getElementById("new-item-name");
-  const qtyInput = document.getElementById("new-item-qty");
-  const unitInput = document.getElementById("new-item-unit");
-  const name = nameInput.value.trim();
-  if(!name) return;
-  const qtyVal = qtyInput.value.trim() ? parseFloat(qtyInput.value) : null;
-  const unitVal = unitInput.value.trim() || null;
-  const st = loadState(currentWeek);
-  const newKey = "custom::" + Date.now() + "::" + name.toLowerCase();
-  st.custom = st.custom || [];
-  st.custom.push({key:newKey, item:name, qty:qtyVal, unit:unitVal});
-  saveState(currentWeek, st);
-  nameInput.value = "";
-  qtyInput.value = "";
-  unitInput.value = "";
-  renderShop();
-});
-
-document.getElementById("edit-toggle").addEventListener("click", ()=>{
-  editingMenu = !editingMenu;
-  const btn = document.getElementById("edit-toggle");
-  btn.classList.toggle("on", editingMenu);
-  document.getElementById("edit-toggle-label").textContent = editingMenu ? "Listo" : "Editar menú";
-  renderMenu();
-});
-
-document.getElementById("restore-link").addEventListener("click", ()=>{
-  if(confirm("Esto restablecerá el menú original de las 4 semanas y perderás tus cambios en el menú. ¿Continuar?")){
-    MENU = deepClone(DEFAULT_MENU);
-    saveMenu();
-    renderMenu();
-    renderShop();
+function sheetHeader(host,title,sub){
+  const h=document.createElement("div");
+  h.className="sheet-head";
+  const box=document.createElement("div");
+  box.style.flex="1";
+  const t=document.createElement("h2");
+  t.className="sheet-title"; t.textContent=title;
+  box.appendChild(t);
+  if(sub){
+    const s=document.createElement("p");
+    s.className="sheet-sub"; s.textContent=sub;
+    box.appendChild(s);
   }
-});
+  const c=document.createElement("button");
+  c.className="close"; c.setAttribute("aria-label","Cerrar");
+  c.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+  c.addEventListener("click",closeSheet);
+  h.append(box,c);
+  host.appendChild(h);
+}
 
-document.querySelectorAll(".tab").forEach(tab=>{
-  tab.addEventListener("click", ()=>{
-    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
-    tab.classList.add("active");
-    currentView = tab.dataset.view;
-    document.getElementById("view-menu").classList.toggle("active", currentView==="menu");
-    document.getElementById("view-shop").classList.toggle("active", currentView==="shop");
+/* --- detalle de ingrediente: de qué comidas viene --- */
+function openIngredientSheet(item){
+  openSheet(host=>{
+    const secLabel=(SECTIONS.find(s=>s.id===sectionFor(item.item))||{}).label||"Otros";
+    sheetHeader(host, cap(item.item), secLabel+" · Semana "+(week+1));
+
+    /* cantidad */
+    const qb=document.createElement("div");
+    qb.className="block";
+    const ql=document.createElement("p");
+    ql.className="block-label"; ql.textContent="Cantidad a comprar";
+    const qr=document.createElement("div");
+    qr.className="qtyrow";
+    const qi=document.createElement("input");
+    qi.className="field"; qi.type="number"; qi.step="any"; qi.min="0";
+    qi.inputMode="decimal";
+    qi.value = item.qty!=null ? fmt(item.qty) : "";
+    qi.placeholder="Sin cantidad";
+    const ui=document.createElement("input");
+    ui.className="field"; ui.type="text"; ui.style.maxWidth="90px";
+    ui.value=item.unit||""; ui.placeholder="Unidad";
+    function persist(){
+      const s=weekState(week);
+      const v=qi.value.trim()===""?null:parseFloat(qi.value);
+      if(item.custom){
+        const c=(s.custom||[]).find(x=>x.key===item.key);
+        if(c){ c.qty=isNaN(v)?null:v; c.unit=ui.value.trim()||null; }
+      }else{
+        s.overrides[item.key]=isNaN(v)?null:v;
+      }
+      saveWeekState(week,s);
+    }
+    qi.addEventListener("change",persist);
+    ui.addEventListener("change",persist);
+    qr.append(qi,ui);
+    qb.append(ql,qr);
+    if(!item.custom){
+      const note=document.createElement("p");
+      note.className="sheet-sub";
+      note.style.marginTop="8px";
+      note.textContent="Suma de todas las comidas de la semana. Puedes ajustarla.";
+      qb.appendChild(note);
+    }
+    host.appendChild(qb);
+
+    /* orígenes */
+    const ob=document.createElement("div");
+    ob.className="block";
+    const ol=document.createElement("p");
+    ol.className="block-label";
+    ol.textContent = item.custom ? "Añadido por ti" : "Aparece en "+item.origins.length+(item.origins.length===1?" comida":" comidas");
+    ob.appendChild(ol);
+
+    if(item.custom){
+      const p=document.createElement("p");
+      p.className="sheet-sub";
+      p.textContent="Este producto no viene del menú, lo añadiste tú a la lista de esta semana.";
+      ob.appendChild(p);
+    }else{
+      item.origins.forEach(o=>{
+        const r=document.createElement("div");
+        r.className="origin";
+        const d=document.createElement("span");
+        d.className="od"; d.textContent=DAYS[o.day].full;
+        const p=document.createElement("span");
+        p.className="op"; p.textContent=o.dish;
+        const q=document.createElement("span");
+        q.className="oq"; q.textContent=qtyText(o.qty,o.unit)||"—";
+        r.append(d,p,q);
+        ob.appendChild(r);
+      });
+    }
+    host.appendChild(ob);
+
+    /* acciones */
+    const acts=document.createElement("div");
+    acts.className="sheet-actions";
+    if(!item.custom){
+      const b=document.createElement("button");
+      b.className="btn ghost full";
+      b.textContent = isBasic(item.item) ? "Quitar de básicos" : "Marcar como básico";
+      b.addEventListener("click",()=>{ toggleBasic(item.item); closeSheet(); renderShop(); });
+      acts.appendChild(b);
+    }
+    const del=document.createElement("button");
+    del.className="btn danger full";
+    del.textContent="Quitar de la lista";
+    del.addEventListener("click",()=>{
+      const s=weekState(week);
+      if(item.custom) s.custom=(s.custom||[]).filter(x=>x.key!==item.key);
+      else if(!s.removed.includes(item.key)) s.removed.push(item.key);
+      delete s.checked[item.key];
+      saveWeekState(week,s);
+      closeSheet(); renderShop();
+    });
+    acts.appendChild(del);
+    host.appendChild(acts);
   });
+}
+
+/* --- editor de plato --- */
+function openDishSheet(dayIdx,dishIdx){
+  openSheet(host=>{
+    const dish=MENU[week][dayIdx].dishes[dishIdx];
+    if(!dish){ closeSheet(); return; }
+    sheetHeader(host,"Editar plato",DAYS[dayIdx].full+" · Semana "+(week+1));
+
+    const nb=document.createElement("div");
+    nb.className="block";
+    const nl=document.createElement("p");
+    nl.className="block-label"; nl.textContent="Nombre del plato";
+    const ni=document.createElement("input");
+    ni.className="field"; ni.type="text"; ni.value=dish.name;
+    ni.addEventListener("input",()=>{
+      dish.name=ni.value.trim()||"Plato sin nombre";
+      saveMenu();
+    });
+    nb.append(nl,ni);
+    host.appendChild(nb);
+
+    const ib=document.createElement("div");
+    ib.className="block";
+    const il=document.createElement("p");
+    il.className="block-label"; il.textContent="Ingredientes";
+    ib.appendChild(il);
+    const list=document.createElement("div");
+    ib.appendChild(list);
+
+    function drawIngredients(){
+      list.textContent="";
+      dish.ingredients.forEach((ing2,idx)=>{
+        const r=document.createElement("div");
+        r.className="ed-row";
+        const it=document.createElement("input");
+        it.className="field f-item"; it.type="text";
+        it.value=ing2.item; it.placeholder="Ingrediente";
+        it.addEventListener("input",()=>{ ing2.item=it.value; saveMenu(); });
+        const qt=document.createElement("input");
+        qt.className="field f-qty"; qt.type="number"; qt.step="any"; qt.min="0";
+        qt.inputMode="decimal";
+        qt.value=ing2.qty!=null?ing2.qty:""; qt.placeholder="Cant.";
+        qt.addEventListener("input",()=>{
+          const v=qt.value.trim();
+          ing2.qty = v===""?null:parseFloat(v);
+          saveMenu();
+        });
+        const un=document.createElement("input");
+        un.className="field f-unit"; un.type="text";
+        un.value=ing2.unit||""; un.placeholder="ud";
+        un.addEventListener("input",()=>{ ing2.unit=un.value.trim()||null; saveMenu(); });
+        const x=document.createElement("button");
+        x.className="del-x"; x.setAttribute("aria-label","Quitar ingrediente");
+        x.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+        x.addEventListener("click",()=>{
+          dish.ingredients.splice(idx,1); saveMenu(); drawIngredients();
+        });
+        r.append(it,qt,un,x);
+        list.appendChild(r);
+      });
+      if(!dish.ingredients.length){
+        const p=document.createElement("p");
+        p.className="sheet-sub";
+        p.textContent="Este plato aún no tiene ingredientes.";
+        list.appendChild(p);
+      }
+    }
+    drawIngredients();
+
+    const addI=document.createElement("button");
+    addI.className="add-dish";
+    addI.textContent="+ Añadir ingrediente";
+    addI.addEventListener("click",()=>{
+      dish.ingredients.push({qty:null,unit:null,item:""});
+      saveMenu(); drawIngredients();
+      const inputs=list.querySelectorAll(".f-item");
+      if(inputs.length) inputs[inputs.length-1].focus();
+    });
+    ib.appendChild(addI);
+    host.appendChild(ib);
+
+    const acts=document.createElement("div");
+    acts.className="sheet-actions";
+    const done=document.createElement("button");
+    done.className="btn full";
+    done.textContent="Listo";
+    done.addEventListener("click",()=>{ closeSheet(); renderMenu(); });
+    const del=document.createElement("button");
+    del.className="btn danger full";
+    del.textContent="Eliminar este plato";
+    del.addEventListener("click",()=>{
+      if(!confirm("¿Eliminar «"+dish.name+"» del "+DAYS[dayIdx].full.toLowerCase()+"?")) return;
+      MENU[week][dayIdx].dishes.splice(dishIdx,1);
+      saveMenu(); closeSheet(); renderMenu();
+    });
+    acts.append(done,del);
+    host.appendChild(acts);
+  });
+}
+
+/* ====================== navegación ====================== */
+function renderWeeks(){
+  const seg=document.getElementById("weekSeg");
+  seg.textContent="";
+  for(let w=0;w<4;w++){
+    const b=document.createElement("button");
+    b.textContent=String(w+1);
+    b.setAttribute("aria-pressed", w===week?"true":"false");
+    b.setAttribute("aria-label","Semana "+(w+1));
+    b.addEventListener("click",()=>{
+      week=w;
+      renderWeeks();
+      render();
+    });
+    seg.appendChild(b);
+  }
+}
+function render(){
+  document.getElementById("tagline").textContent =
+    view==="menu" ? "Semana "+(week+1)+" · 7 días" : "Lista de la compra · semana "+(week+1);
+  if(view==="menu") renderMenu(); else renderShop();
+}
+function setView(v){
+  view=v;
+  document.getElementById("viewMenu").hidden = v!=="menu";
+  document.getElementById("viewShop").hidden = v!=="shop";
+  document.getElementById("tabMenu").setAttribute("aria-selected", v==="menu"?"true":"false");
+  document.getElementById("tabShop").setAttribute("aria-selected", v==="shop"?"true":"false");
+  render();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+document.getElementById("tabMenu").addEventListener("click",()=>setView("menu"));
+document.getElementById("tabShop").addEventListener("click",()=>setView("shop"));
+
+/* tema */
+const themeBtn=document.getElementById("themeBtn");
+(function initTheme(){
+  const saved=lsGet(K_THEME);
+  if(saved==="dark"||saved==="light") document.documentElement.setAttribute("data-theme",saved);
+})();
+themeBtn.addEventListener("click",()=>{
+  const cur=document.documentElement.getAttribute("data-theme");
+  const prefersDark=window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const isDark = cur ? cur==="dark" : prefersDark;
+  const next = isDark ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme",next);
+  lsSet(K_THEME,next);
 });
 
-renderWeekPills();
-renderMenu();
-renderShop();
+renderWeeks();
+setView("menu");
 </script>
 </body>
 </html>
