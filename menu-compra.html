@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Menú y compra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1E6;
+  --surface:#FFFFFF;
+  --ink:#23291E;
+  --ink-soft:#5B6355;
+  --primary:#2F4B3C;
+  --primary-ink:#EAF1EC;
+  --accent:#C97B2E;
+  --accent-ink:#4A2D0F;
+  --muted:#8B9284;
+  --line:#DDE3D3;
+  --done:#B9C4AE;
+  --danger:#A8402F;
+  --basic-bg:#F3E4CC;
+  --basic-ink:#7A4E14;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1B1F17;
+    --surface:#242A20;
+    --ink:#EDEFE6;
+    --ink-soft:#AEB5A2;
+    --primary:#8FB89E;
+    --primary-ink:#12241A;
+    --accent:#E4A45C;
+    --accent-ink:#2E1B08;
+    --muted:#7C8672;
+    --line:#3A4133;
+    --done:#4B5442;
+    --danger:#E27860;
+    --basic-bg:#3E3121;
+    --basic-ink:#E9C285;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1B1F17;
+  --surface:#242A20;
+  --ink:#EDEFE6;
+  --ink-soft:#AEB5A2;
+  --primary:#8FB89E;
+  --primary-ink:#12241A;
+  --accent:#E4A45C;
+  --accent-ink:#2E1B08;
+  --muted:#7C8672;
+  --line:#3A4133;
+  --done:#4B5442;
+  --danger:#E27860;
+  --basic-bg:#3E3121;
+  --basic-ink:#E9C285;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg);
+  color:var(--ink);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  min-height:100vh;
+  padding-bottom:84px;
+}
+.wrap{
+  max-width:480px;
+  margin:0 auto;
+  padding:20px 16px 8px;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:10px;
+}
+header h1{
+  font-family:'Fraunces',Georgia,serif;
+  font-weight:600;
+  font-size:26px;
+  margin:0 0 2px;
+  letter-spacing:-0.01em;
+}
+header p{
+  margin:0 0 16px;
+  color:var(--ink-soft);
+  font-size:13px;
+}
+.edit-toggle{
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  font-size:12px;
+  font-weight:600;
+  padding:7px 12px;
+  border-radius:9px;
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:5px;
+}
+.edit-toggle.on{
+  background:var(--primary);
+  color:var(--primary-ink);
+  border-color:var(--primary);
+}
+.edit-toggle svg{width:14px;height:14px;}
+.restore-link{
+  border:none;
+  background:none;
+  color:var(--danger);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  padding:0 0 14px;
+  display:block;
+  margin-top:-4px;
+}
+
+.weeks{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  padding-bottom:4px;
+  margin-bottom:18px;
+}
+.week-pill{
+  flex:1;
+  text-align:center;
+  padding:9px 0;
+  border-radius:10px;
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .15s, color .15s, border-color .15s;
+}
+.week-pill.active{
+  background:var(--primary);
+  color:var(--primary-ink);
+  border-color:var(--primary);
+}
+.view{display:none;}
+.view.active{display:block;}
+
+.day-card{
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+  margin-bottom:10px;
+  overflow:hidden;
+}
+.day-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 16px;
+  cursor:pointer;
+}
+.day-name{
+  font-family:'Fraunces',Georgia,serif;
+  font-weight:600;
+  font-size:16px;
+}
+.day-sub{
+  font-size:12px;
+  color:var(--ink-soft);
+  margin-top:2px;
+}
+.day-chev{
+  color:var(--muted);
+  font-size:13px;
+  transition:transform .18s;
+  flex-shrink:0;
+}
+.day-card.open .day-chev{transform:rotate(180deg);}
+.day-body{
+  display:none;
+  padding:0 16px 14px;
+  border-top:1px solid var(--line);
+}
+.day-card.open .day-body{display:block;padding-top:10px;}
+.dish{
+  margin-bottom:14px;
+}
+.dish:last-child{margin-bottom:0;}
+.dish-name{
+  font-weight:600;
+  font-size:14px;
+  margin-bottom:6px;
+  color:var(--ink);
+}
+.ing-list{
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+.ing-list li{
+  font-size:13px;
+  color:var(--ink-soft);
+  padding:3px 0 3px 14px;
+  position:relative;
+}
+.ing-list li::before{
+  content:"";
+  position:absolute;
+  left:0;
+  top:10px;
+  width:4px;
+  height:4px;
+  border-radius:50%;
+  background:var(--muted);
+}
+.basic-pill{
+  display:inline-block;
+  font-size:10px;
+  font-weight:600;
+  color:var(--basic-ink);
+  background:var(--basic-bg);
+  border-radius:5px;
+  padding:1px 6px;
+  margin-left:6px;
+  cursor:default;
+  vertical-align:middle;
+}
+.basic-pill.clickable{cursor:pointer;}
+
+.list-summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:8px;
+}
+.list-summary .count{
+  font-size:13px;
+  color:var(--ink-soft);
+}
+.reset-btn{
+  border:none;
+  background:none;
+  color:var(--accent);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  padding:4px;
+}
+.hide-basics-row{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:14px;
+  font-size:12px;
+  color:var(--ink-soft);
+}
+.hide-basics-row input{width:15px;height:15px;}
+
+.shop-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 4px;
+  border-bottom:1px solid var(--line);
+}
+.shop-row:last-child{border-bottom:none;}
+.check{
+  width:22px;
+  height:22px;
+  min-width:22px;
+  border-radius:50%;
+  border:1.5px solid var(--muted);
+  background:transparent;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--primary-ink);
+  font-size:12px;
+  flex-shrink:0;
+}
+.check.checked{
+  background:var(--primary);
+  border-color:var(--primary);
+}
+.shop-item{
+  flex:1;
+  min-width:0;
+}
+.shop-item-name{
+  font-size:14px;
+  line-height:1.3;
+}
+.shop-row.checked .shop-item-name{
+  color:var(--muted);
+  text-decoration:line-through;
+}
+.qty-input{
+  width:52px;
+  padding:5px 4px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:13px;
+  text-align:center;
+  font-family:'Inter',sans-serif;
+}
+.unit-label{
+  font-size:12px;
+  color:var(--ink-soft);
+  min-width:30px;
+}
+.del-btn{
+  border:none;
+  background:none;
+  color:var(--danger);
+  font-size:16px;
+  cursor:pointer;
+  padding:4px 2px;
+  line-height:1;
+  flex-shrink:0;
+}
+
+.add-form{
+  margin-top:16px;
+  padding:14px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+.add-form-title{
+  font-weight:600;
+  font-size:14px;
+  margin-bottom:10px;
+}
+.add-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:8px;
+}
+.add-row input{
+  padding:8px 10px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:13px;
+  font-family:'Inter',sans-serif;
+  min-width:0;
+}
+.add-row input.name-input{flex:2;}
+.add-row input.qty-input-form{flex:1;}
+.add-row input.unit-input{flex:1;}
+.add-btn{
+  width:100%;
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  background:var(--accent);
+  color:var(--accent-ink);
+  font-size:14px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+.custom-tag{
+  font-size:10px;
+  color:var(--accent);
+  border:1px solid var(--accent);
+  border-radius:5px;
+  padding:1px 5px;
+  margin-left:6px;
+  vertical-align:middle;
+}
+.empty-note{
+  font-size:13px;
+  color:var(--ink-soft);
+  text-align:center;
+  padding:24px 0;
+}
+
+.edit-dish{
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:10px;
+  background:var(--bg);
+}
+.edit-dish-head{
+  display:flex;
+  gap:6px;
+  margin-bottom:8px;
+  align-items:center;
+}
+.edit-dish-head input{
+  flex:1;
+  font-weight:600;
+  font-size:13px;
+  padding:7px 9px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--surface);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  min-width:0;
+}
+.edit-ing-row{
+  display:flex;
+  gap:6px;
+  margin-bottom:6px;
+  align-items:center;
+}
+.edit-ing-row input{
+  padding:6px 7px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--surface);
+  color:var(--ink);
+  font-size:12px;
+  font-family:'Inter',sans-serif;
+  min-width:0;
+}
+.edit-ing-row .ei-item{flex:3;}
+.edit-ing-row .ei-qty{flex:1;}
+.edit-ing-row .ei-unit{flex:1;}
+.small-btn{
+  border:1px solid var(--line);
+  background:var(--surface);
+  color:var(--ink-soft);
+  font-size:12px;
+  font-weight:600;
+  padding:6px 10px;
+  border-radius:7px;
+  cursor:pointer;
+}
+.small-btn.danger{color:var(--danger);border-color:var(--danger);}
+.edit-dish-actions{
+  display:flex;
+  gap:8px;
+  margin-top:4px;
+}
+.add-dish-btn{
+  width:100%;
+  padding:9px;
+  border:1px dashed var(--muted);
+  border-radius:9px;
+  background:none;
+  color:var(--ink-soft);
+  font-size:13px;
+  font-weight:600;
+  cursor:pointer;
+  font-family:'Inter',sans-serif;
+}
+
+nav.tabbar{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  background:var(--surface);
+  border-top:1px solid var(--line);
+  display:flex;
+  padding:6px 0 max(6px, env(safe-area-inset-bottom));
+  z-index:10;
+}
+.tab{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-family:'Inter',sans-serif;
+  font-size:11px;
+  font-weight:600;
+  padding:6px 0;
+  cursor:pointer;
+}
+.tab.active{color:var(--primary);}
+.tab-icon{
+  width:20px;
+  height:20px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Menú de la semana</h1>
+      <p id="week-label">Semana 1</p>
+    </div>
+    <button class="edit-toggle" id="edit-toggle">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+      <span id="edit-toggle-label">Editar menú</span>
+    </button>
+  </header>
+
+  <div class="weeks" id="weeks"></div>
+  <button class="restore-link" id="restore-link" style="display:none;">Restablecer menú original</button>
+
+  <section class="view active" id="view-menu"></section>
+
+  <section class="view" id="view-shop">
+    <div class="list-summary">
+      <span class="count" id="shop-count">0 de 0 comprados</span>
+      <button class="reset-btn" id="reset-checks">Desmarcar todo</button>
+    </div>
+    <label class="hide-basics-row">
+      <input type="checkbox" id="hide-basics-check">
+      Ocultar básicos (ingredientes que ya sueles tener)
+    </label>
+    <div id="shop-list"></div>
+    <div class="add-form">
+      <div class="add-form-title">Añadir producto</div>
+      <div class="add-row">
+        <input type="text" class="name-input" id="new-item-name" placeholder="Nombre del producto">
+      </div>
+      <div class="add-row">
+        <input type="number" class="qty-input-form" id="new-item-qty" placeholder="Cantidad" min="0" step="any">
+        <input type="text" class="unit-input" id="new-item-unit" placeholder="Unidad (g, ud...)">
+      </div>
+      <button class="add-btn" id="add-item-btn">Añadir a la lista</button>
+    </div>
+  </section>
+</div>
+
+<nav class="tabbar">
+  <button class="tab active" data-view="menu">
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/></svg>
+    Menú
+  </button>
+  <button class="tab" data-view="shop">
+    <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6h2l1.6 9.6a2 2 0 0 0 2 1.7h7.4a2 2 0 0 0 2-1.6L20.5 9H7"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
+    Compra
+  </button>
+</nav>
+
+<script>
+const DAYS = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+
+function ing(qty, unit, item){ return {qty, unit, item}; }
+
+const DEFAULT_MENU = [
+[
+  {dishes:[
+    {name:"Puré de verdura", ingredients:[ing(300,"g","verduras variadas (patata, zanahoria, puerro, calabacín)"),ing(1,"diente","ajo"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]},
+    {name:"Filetes de pavo/pollo", ingredients:[ing(2,"ud","filetes de pavo o pollo (150 g c/u)"),ing(null,null,"sal"),ing(null,null,"pimienta"),ing(null,null,"aceite de oliva")]},
+    {name:"Revuelto de huevo con morcilla", ingredients:[ing(4,"ud","huevos"),ing(100,"g","morcilla"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]}
+  ]},
+  {dishes:[
+    {name:"Pescado con patata cocida", ingredients:[ing(300,"g","pescado blanco (merluza o rape)"),ing(2,"ud","patatas"),ing(null,null,"aceite de oliva"),ing(null,null,"sal"),ing(null,null,"perejil")]},
+    {name:"Hamburguesas de ternera/pollo", ingredients:[ing(2,"ud","hamburguesas de ternera o pollo (125 g c/u)"),ing(2,"ud","panes de hamburguesa"),ing(null,null,"lechuga"),ing(null,null,"tomate"),ing(null,null,"queso (opcional)")]}
+  ]},
+  {dishes:[
+    {name:"Arroz con jamón y setas", ingredients:[ing(150,"g","arroz"),ing(80,"g","jamón en tacos"),ing(150,"g","setas"),ing(1,"diente","ajo"),ing(400,"ml","caldo de pollo"),ing(null,null,"aceite de oliva")]},
+    {name:"Sopa y tortilla", ingredients:[ing(500,"ml","caldo de pollo o verduras"),ing(50,"g","fideos finos"),ing(4,"ud","huevos"),ing(2,"ud","patatas"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]}
+  ]},
+  {dishes:[
+    {name:"Filetes empanados con quinoa de verduras", ingredients:[ing(2,"ud","filetes de pollo o ternera"),ing(1,"ud","huevos"),ing(null,null,"pan rallado"),ing(100,"g","quinoa"),ing(null,null,"verduras variadas (pimiento, calabacín, zanahoria)")]},
+    {name:"Croquetas", ingredients:[ing(12,"ud","croquetas (o bechamel + jamón/pollo desmenuzado)"),ing(1,"ud","huevos"),ing(null,null,"pan rallado")]}
+  ]},
+  {dishes:[
+    {name:"Pasta con calabaza y bacon", ingredients:[ing(200,"g","pasta"),ing(200,"g","calabaza"),ing(80,"g","bacon en tacos"),ing(1,"diente","ajo"),ing(100,"ml","nata o leche"),ing(null,null,"queso parmesano")]},
+    {name:"Merluza rebozada con patatas", ingredients:[ing(2,"ud","filetes de merluza"),ing(null,null,"harina"),ing(1,"ud","huevos"),ing(2,"ud","patatas"),ing(null,null,"aceite de oliva")]}
+  ]},
+  {dishes:[
+    {name:"Raxo con patatas", ingredients:[ing(300,"g","lomo de cerdo en tacos"),ing(2,"ud","patatas"),ing(2,"diente","ajo"),ing(null,null,"pimentón"),ing(null,null,"vino blanco")]},
+    {name:"Ensalada de patata", ingredients:[ing(2,"ud","patatas"),ing(1,"ud","huevo cocido"),ing(null,null,"mayonesa"),ing(null,null,"aceitunas"),ing(null,null,"atún (opcional)")]}
+  ]},
+  {dishes:[
+    {name:"Pescado al horno", ingredients:[ing(2,"ud","filetes de pescado blanco"),ing(1,"ud","limón"),ing(null,null,"patatas"),ing(null,null,"cebolla"),ing(null,null,"aceite de oliva")]},
+    {name:"Nachos", ingredients:[ing(150,"g","nachos de maíz"),ing(100,"g","queso rallado"),ing(null,null,"tomate"),ing(null,null,"guacamole (opcional)"),ing(null,null,"jalapeños")]}
+  ]}
+],
+[
+  {dishes:[
+    {name:"Cuartos de pollo al horno", ingredients:[ing(2,"ud","cuartos de pollo"),ing(2,"ud","patatas"),ing(null,null,"ajo"),ing(null,null,"romero"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]},
+    {name:"Revuelto de gulas", ingredients:[ing(4,"ud","huevos"),ing(150,"g","gulas"),ing(null,null,"ajo"),ing(null,null,"guindilla (opcional)"),ing(null,null,"aceite de oliva")]}
+  ]},
+  {dishes:[
+    {name:"Dorada con verduras a la plancha", ingredients:[ing(2,"ud","doradas"),ing(null,null,"calabacín"),ing(null,null,"pimiento"),ing(null,null,"cebolla"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]},
+    {name:"Empanadillas", ingredients:[ing(10,"ud","obleas de empanadilla"),ing(null,null,"relleno de atún o carne"),ing(null,null,"tomate frito"),ing(1,"ud","huevo cocido (si es de atún)")]}
+  ]},
+  {dishes:[
+    {name:"Ensalada de pasta con pollo", ingredients:[ing(200,"g","pasta"),ing(1,"ud","pechuga de pollo"),ing(null,null,"tomate cherry"),ing(null,null,"maíz"),ing(null,null,"aceitunas"),ing(null,null,"aceite de oliva")]},
+    {name:"Boquerones/sardinas", ingredients:[ing(300,"g","boquerones o sardinas"),ing(null,null,"harina"),ing(null,null,"aceite de oliva"),ing(null,null,"limón"),ing(null,null,"sal")]}
+  ]},
+  {dishes:[
+    {name:"Puré de lentejas/garbanzos + filetes de ternera", ingredients:[ing(200,"g","lentejas o garbanzos"),ing(null,null,"zanahoria"),ing(null,null,"cebolla"),ing(null,null,"ajo"),ing(2,"ud","filetes de ternera")]},
+    {name:"Noodles", ingredients:[ing(200,"g","noodles"),ing(null,null,"verduras variadas (zanahoria, pimiento, brócoli)"),ing(null,null,"salsa de soja"),ing(null,null,"ajo"),ing(null,null,"jengibre")]}
+  ]},
+  {dishes:[
+    {name:"Fideos con almejas", ingredients:[ing(200,"g","fideos"),ing(300,"g","almejas"),ing(null,null,"ajo"),ing(null,null,"perejil"),ing(null,null,"caldo de pescado"),ing(null,null,"vino blanco")]},
+    {name:"Alitas de pollo", ingredients:[ing(8,"ud","alitas de pollo"),ing(null,null,"ajo"),ing(null,null,"pimentón"),ing(null,null,"aceite de oliva"),ing(null,null,"sal")]}
+  ]},
+  {dishes:[
+    {name:"Albóndigas de ternera", ingredients:[ing(300,"g","carne picada de ternera"),ing(1,"ud","huevos"),ing(null,null,"pan rallado"),ing(null,null,"ajo"),ing(null,null,"perejil"),ing(null,null,"tomate frito")]},
+    {name:"Pizza", ingredients:[ing(1,"ud","base de masa de pizza"),ing(null,null,"tomate frito"),ing(null,null,"mozzarella"),ing(null,null,"ingredientes al gusto")]}
+  ]},
+  {dishes:[
+    {name:"Carbonara", ingredients:[ing(200,"g","pasta"),ing(100,"g","bacon o panceta"),ing(2,"ud","huevos"),ing(null,null,"queso parmesano"),ing(null,null,"pimienta")]},
+    {name:"Piqui piqui", ingredients:[ing(300,"g","carne de cerdo o pollo en tacos"),ing(null,null,"patatas fritas"),ing(null,null,"ajo"),ing(null,null,"pimentón"),ing(null,null,"mayonesa o alioli")]}
+  ]}
+],
+[
+  {dishes:[
+    {name:"Ensalada de arroz con pescado", ingredients:[ing(150,"g","arroz"),ing(200,"g","pescado (atún o similar)"),ing(null,null,"maíz"),ing(null,null,"pimiento"),ing(null,null,"aceitunas"),ing(null,null,"aceite de oliva")]},
+    {name:"Revuelto de setas shiitake", ingredients:[ing(4,"ud","huevos"),ing(150,"g","setas shiitake"),ing(null,null,"ajo"),ing(null,null,"aceite de oliva"),ing(null,null,"perejil")]}
+  ]},
+  {dishes:[
+    {name:"Gnocchi con calabaza", ingredients:[ing(300,"g","gnocchi"),ing(200,"g","calabaza"),ing(100,"ml","nata"),ing(null,null,"queso parmesano"),ing(null,null,"nuez moscada")]},
+    {name:"Salpicón de palometa", ingredients:[ing(300,"g","palometa cocida"),ing(null,null,"pimiento"),ing(null,null,"cebolla"),ing(null,null,"aceitunas"),ing(null,null,"vinagre"),ing(null,null,"aceite de oliva")]}
+  ]},
+  {dishes:[
+    {name:"Filetes de ternera con verdura rebozada", ingredients:[ing(2,"ud","filetes de ternera"),ing(null,null,"verduras variadas (calabacín, berenjena)"),ing(null,null,"harina"),ing(null,null,"huevo"),ing(null,null,"aceite de oliva")]},
+    {name:"Fingers de merluza/calamares a la romana", ingredients:[ing(200,"g","merluza en tiras o calamares"),ing(null,null,"harina"),ing(null,null,"huevo"),ing(null,null,"pan rallado"),ing(null,null,"aceite de oliva")]}
+  ]},
+  {dishes:[
+    {name:"Lubina con quinoa", ingredients:[ing(2,"ud","lubinas"),ing(100,"g","quinoa"),ing(null,null,"verduras al gusto"),ing(null,null,"limón"),ing(null,null,"aceite de oliva")]},
+    {name:"Cinta de lomo con puré de patata", ingredients:[ing(2,"ud","cintas de lomo de cerdo"),ing(2,"ud","patatas"),ing(null,null,"leche o mantequilla (para el puré)")]}
+  ]},
+  {dishes:[
+    {name:"Pasta con carne picada", ingredients:[ing(200,"g","pasta"),ing(200,"g","carne picada"),ing(null,null,"tomate frito"),ing(null,null,"cebolla"),ing(null,null,"ajo")]},
+    {name:"Tortilla de patata", ingredients:[ing(4,"ud","huevos"),ing(2,"ud","patatas"),ing(1,"ud","cebolla (opcional)"),ing(null,null,"aceite de oliva")]}
+  ]},
+  {dishes:[
+    {name:"Guiso de carne", ingredients:[ing(300,"g","carne de ternera o cerdo"),ing(null,null,"patatas"),ing(null,null,"zanahoria"),ing(null,null,"cebolla"),ing(null,null,"vino tinto o caldo")]},
+    {name:"Sandwich sorpresa", ingredients:[ing(null,null,"pan de molde"),ing(null,null,"jamón york"),ing(null,null,"queso"),ing(null,null,"mayonesa"),ing(null,null,"huevo (si se reboza y fríe)")]}
+  ]},
+  {dishes:[
+    {name:"Barbacoa", ingredients:[ing(350,"g","carne variada (costillas, chuletas, chorizo)"),ing(null,null,"pan"),ing(null,null,"salsas al gusto")]},
+    {name:"Fritura de pescado", ingredients:[ing(300,"g","pescaditos variados (boquerones, calamares)"),ing(null,null,"harina"),ing(null,null,"aceite de oliva")]}
+  ]}
+],
+[
+  {dishes:[
+    {name:"Crema de zanahoria", ingredients:[ing(400,"g","zanahoria"),ing(1,"ud","patata"),ing(null,null,"cebolla"),ing(null,null,"caldo de verduras"),ing(null,null,"nata (opcional)")]},
+    {name:"Secreto a la plancha", ingredients:[ing(300,"g","secreto ibérico"),ing(null,null,"sal"),ing(null,null,"aceite de oliva")]},
+    {name:"Calamar a la plancha", ingredients:[ing(300,"g","calamar"),ing(null,null,"ajo"),ing(null,null,"perejil"),ing(null,null,"aceite de oliva"),ing(null,null,"limón")]}
+  ]},
+  {dishes:[
+    {name:"Merluza en salsa verde", ingredients:[ing(2,"ud","filetes de merluza"),ing(null,null,"ajo"),ing(null,null,"perejil"),ing(null,null,"harina"),ing(null,null,"caldo de pescado"),ing(null,null,"vino blanco"),ing(null,null,"guisantes (opcional)")]},
+    {name:"Croquetas", ingredients:[ing(12,"ud","croquetas (o bechamel + jamón/pollo desmenuzado)"),ing(1,"ud","huevos"),ing(null,null,"pan rallado")]}
+  ]},
+  {dishes:[
+    {name:"Puré de legumbres + filete de ternera", ingredients:[ing(200,"g","legumbres (lentejas o garbanzos)"),ing(null,null,"verduras variadas"),ing(2,"ud","filetes de ternera")]},
+    {name:"Arroz con salchichas y huevo", ingredients:[ing(150,"g","arroz"),ing(4,"ud","salchichas"),ing(2,"ud","huevos"),ing(null,null,"tomate frito (opcional)")]}
+  ]},
+  {dishes:[
+    {name:"Risotto de espinacas y brócoli", ingredients:[ing(200,"g","arroz arborio"),ing(150,"g","espinacas"),ing(100,"g","brócoli"),ing(null,null,"caldo de verduras"),ing(null,null,"cebolla"),ing(null,null,"queso parmesano")]},
+    {name:"Gallos cocidos con patata y ajada", ingredients:[ing(2,"ud","gallos (pescado)"),ing(2,"ud","patatas"),ing(null,null,"ajo"),ing(null,null,"pimentón"),ing(null,null,"aceite de oliva")]}
+  ]},
+  {dishes:[
+    {name:"Calabacines rellenos de bacalao", ingredients:[ing(2,"ud","calabacines"),ing(200,"g","bacalao desmigado"),ing(null,null,"cebolla"),ing(null,null,"tomate"),ing(null,null,"queso rallado")]},
+    {name:"Nuggets de pollo y aritos de cebolla", ingredients:[ing(10,"ud","nuggets de pollo"),ing(1,"ud","cebolla grande"),ing(null,null,"harina"),ing(null,null,"huevo"),ing(null,null,"pan rallado")]}
+  ]},
+  {dishes:[
+    {name:"Japonés / Chino", ingredients:[ing(null,null,"plato variable — añade aquí tus propios ingredientes según la receta elegida")]}
+  ]},
+  {dishes:[
+    {name:"Super hamburguesa (smash)", ingredients:[ing(300,"g","carne picada de ternera (2 hamburguesas smash)"),ing(2,"ud","panes de brioche"),ing(null,null,"queso cheddar"),ing(null,null,"cebolla"),ing(null,null,"salsa especial (mayonesa + ketchup + mostaza)"),ing(null,null,"pepinillos")]}
+  ]}
+]
+];
+
+const MENU_STORAGE_KEY = "menuCompraApp_menuData_v1";
+const BASICS_STORAGE_KEY = "menuCompraApp_basicOverrides_v1";
+const HIDE_BASICS_KEY = "menuCompraApp_hideBasics_v1";
+const STORAGE_PREFIX = "menuCompraApp_week";
+
+function deepClone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+let MENU;
+try{
+  const raw = localStorage.getItem(MENU_STORAGE_KEY);
+  MENU = raw ? JSON.parse(raw) : deepClone(DEFAULT_MENU);
+}catch(e){
+  MENU = deepClone(DEFAULT_MENU);
+}
+
+function saveMenu(){
+  try{ localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(MENU)); }catch(e){}
+}
+
+function loadBasicOverrides(){
+  try{
+    const raw = localStorage.getItem(BASICS_STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {};
+}
+function saveBasicOverrides(obj){
+  try{ localStorage.setItem(BASICS_STORAGE_KEY, JSON.stringify(obj)); }catch(e){}
+}
+
+function weekCountFor(itemLower){
+  let count = 0;
+  for(let w=0; w<MENU.length; w++){
+    let found = false;
+    for(const day of MENU[w]){
+      for(const dish of day.dishes){
+        for(const i2 of dish.ingredients){
+          if(i2.item.trim().toLowerCase() === itemLower){ found = true; break; }
+        }
+        if(found) break;
+      }
+      if(found) break;
+    }
+    if(found) count++;
+  }
+  return count;
+}
+
+function isBasic(item){
+  const key = item.trim().toLowerCase();
+  const overrides = loadBasicOverrides();
+  if(overrides.hasOwnProperty(key)) return overrides[key];
+  return weekCountFor(key) >= 3;
+}
+
+function toggleBasic(item){
+  const key = item.trim().toLowerCase();
+  const overrides = loadBasicOverrides();
+  overrides[key] = !isBasic(item);
+  saveBasicOverrides(overrides);
+}
+
+let currentWeek = 0;
+let currentView = "menu";
+let editingMenu = false;
+
+function storageKey(week){ return STORAGE_PREFIX + week; }
+
+function loadState(week){
+  try{
+    const raw = localStorage.getItem(storageKey(week));
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return {checked:{}, overrides:{}, removed:[], custom:[]};
+}
+
+function saveState(week, state){
+  try{ localStorage.setItem(storageKey(week), JSON.stringify(state)); }catch(e){}
+}
+
+function itemKey(unit, item){
+  return (unit||"") + "::" + item.trim().toLowerCase();
+}
+
+function buildBaseList(weekIdx){
+  const map = new Map();
+  MENU[weekIdx].forEach(day=>{
+    day.dishes.forEach(dish=>{
+      dish.ingredients.forEach(i=>{
+        const key = itemKey(i.unit, i.item);
+        if(map.has(key)){
+          const existing = map.get(key);
+          if(existing.qty!=null && i.qty!=null){ existing.qty += i.qty; }
+        }else{
+          map.set(key, {key, qty:i.qty, unit:i.unit, item:i.item, custom:false});
+        }
+      });
+    });
+  });
+  return Array.from(map.values());
+}
+
+function renderWeekPills(){
+  const el = document.getElementById("weeks");
+  el.innerHTML = "";
+  for(let w=0; w<4; w++){
+    const btn = document.createElement("div");
+    btn.className = "week-pill" + (w===currentWeek ? " active" : "");
+    btn.textContent = "Semana " + (w+1);
+    btn.addEventListener("click", ()=>{
+      currentWeek = w;
+      document.getElementById("week-label").textContent = "Semana " + (w+1);
+      renderWeekPills();
+      renderMenu();
+      renderShop();
+    });
+    el.appendChild(btn);
+  }
+}
+
+function formatQty(n){ return Math.round(n*100)/100; }
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function basicPillHtml(item, clickable){
+  if(!isBasic(item)) return "";
+  return `<span class="basic-pill${clickable?" clickable":""}" data-item="${item.replace(/"/g,'&quot;')}" title="Ingrediente básico: aparece en varias semanas o lo has marcado tú">básico</span>`;
+}
+
+function renderMenu(){
+  const el = document.getElementById("view-menu");
+  el.innerHTML = "";
+  document.getElementById("restore-link").style.display = editingMenu ? "block" : "none";
+
+  MENU[currentWeek].forEach((day, dayIdx)=>{
+    const card = document.createElement("div");
+    card.className = "day-card" + (editingMenu ? " open" : "");
+    const dishNames = day.dishes.map(d=>d.name).join(" · ");
+    card.innerHTML = `
+      <div class="day-head">
+        <div>
+          <div class="day-name">${DAYS[dayIdx]}</div>
+          <div class="day-sub">${dishNames}</div>
+        </div>
+        <div class="day-chev">&#9660;</div>
+      </div>
+      <div class="day-body"></div>
+    `;
+    const head = card.querySelector(".day-head");
+    head.addEventListener("click", ()=>{
+      if(editingMenu) return;
+      card.classList.toggle("open");
+    });
+    const body = card.querySelector(".day-body");
+
+    if(editingMenu){
+      day.dishes.forEach((dish, dishIdx)=>{
+        const dishEl = document.createElement("div");
+        dishEl.className = "edit-dish";
+
+        const head2 = document.createElement("div");
+        head2.className = "edit-dish-head";
+        const nameInput = document.createElement("input");
+        nameInput.value = dish.name;
+        nameInput.addEventListener("change", ()=>{
+          dish.name = nameInput.value.trim() || "Plato sin nombre";
+          saveMenu();
+          renderMenu();
+        });
+        const delDishBtn = document.createElement("button");
+        delDishBtn.className = "small-btn danger";
+        delDishBtn.textContent = "Eliminar plato";
+        delDishBtn.addEventListener("click", ()=>{
+          if(confirm("¿Eliminar este plato del día?")){
+            day.dishes.splice(dishIdx, 1);
+            saveMenu();
+            renderMenu();
+            renderShop();
+          }
+        });
+        head2.appendChild(nameInput);
+        head2.appendChild(delDishBtn);
+        dishEl.appendChild(head2);
+
+        dish.ingredients.forEach((i, ingIdx)=>{
+          const row = document.createElement("div");
+          row.className = "edit-ing-row";
+          row.innerHTML = `
+            <input class="ei-item" placeholder="Ingrediente">
+            <input class="ei-qty" type="number" step="any" placeholder="Cant.">
+            <input class="ei-unit" placeholder="Unidad">
+          `;
+          const itemInput = row.querySelector(".ei-item");
+          const qtyInput = row.querySelector(".ei-qty");
+          const unitInput = row.querySelector(".ei-unit");
+          itemInput.value = i.item;
+          qtyInput.value = i.qty!=null ? i.qty : "";
+          unitInput.value = i.unit || "";
+          itemInput.addEventListener("change", ()=>{ i.item = itemInput.value.trim(); saveMenu(); renderShop(); });
+          qtyInput.addEventListener("change", ()=>{
+            const v = qtyInput.value.trim();
+            i.qty = v==="" ? null : parseFloat(v);
+            saveMenu(); renderShop();
+          });
+          unitInput.addEventListener("change", ()=>{ i.unit = unitInput.value.trim() || null; saveMenu(); renderShop(); });
+
+          const delIngBtn = document.createElement("button");
+          delIngBtn.className = "del-btn";
+          delIngBtn.innerHTML = "&#10005;";
+          delIngBtn.setAttribute("aria-label","Eliminar ingrediente");
+          delIngBtn.addEventListener("click", ()=>{
+            dish.ingredients.splice(ingIdx, 1);
+            saveMenu(); renderMenu(); renderShop();
+          });
+          row.appendChild(delIngBtn);
+          dishEl.appendChild(row);
+        });
+
+        const actions = document.createElement("div");
+        actions.className = "edit-dish-actions";
+        const addIngBtn = document.createElement("button");
+        addIngBtn.className = "small-btn";
+        addIngBtn.textContent = "+ Ingrediente";
+        addIngBtn.addEventListener("click", ()=>{
+          dish.ingredients.push({qty:null, unit:null, item:""});
+          saveMenu(); renderMenu();
+        });
+        actions.appendChild(addIngBtn);
+        dishEl.appendChild(actions);
+
+        body.appendChild(dishEl);
+      });
+
+      const addDishBtn = document.createElement("button");
+      addDishBtn.className = "add-dish-btn";
+      addDishBtn.textContent = "+ Añadir plato a " + DAYS[dayIdx];
+      addDishBtn.addEventListener("click", ()=>{
+        day.dishes.push({name:"Nuevo plato", ingredients:[]});
+        saveMenu(); renderMenu();
+      });
+      body.appendChild(addDishBtn);
+
+    }else{
+      day.dishes.forEach(dish=>{
+        const dishEl = document.createElement("div");
+        dishEl.className = "dish";
+        const ul = document.createElement("ul");
+        ul.className = "ing-list";
+        dish.ingredients.forEach(i=>{
+          const li = document.createElement("li");
+          const text = i.qty!=null ? `${formatQty(i.qty)} ${i.unit||""} de ${i.item}`.replace(/\s+/g," ") : capitalize(i.item);
+          li.innerHTML = text + basicPillHtml(i.item, false);
+          ul.appendChild(li);
+        });
+        const title = document.createElement("div");
+        title.className = "dish-name";
+        title.textContent = dish.name;
+        dishEl.appendChild(title);
+        dishEl.appendChild(ul);
+        body.appendChild(dishEl);
+      });
+    }
+
+    el.appendChild(card);
+  });
+}
+
+function renderShop(){
+  const state = loadState(currentWeek);
+  const base = buildBaseList(currentWeek);
+  const filtered = base.filter(i => !state.removed.includes(i.key));
+  filtered.forEach(i=>{
+    if(state.overrides.hasOwnProperty(i.key)){ i.qty = state.overrides[i.key]; }
+  });
+  const custom = (state.custom||[]).map(c=>({...c, custom:true}));
+  let all = filtered.concat(custom);
+
+  const hideBasics = localStorage.getItem(HIDE_BASICS_KEY) === "1";
+  document.getElementById("hide-basics-check").checked = hideBasics;
+  if(hideBasics){
+    all = all.filter(i => !isBasic(i.item));
+  }
+
+  const listEl = document.getElementById("shop-list");
+  listEl.innerHTML = "";
+
+  if(all.length === 0){
+    listEl.innerHTML = `<div class="empty-note">No hay productos en esta lista.</div>`;
+  }
+
+  all.forEach(i=>{
+    const key = i.key;
+    const isChecked = !!state.checked[key];
+    const row = document.createElement("div");
+    row.className = "shop-row" + (isChecked ? " checked" : "");
+
+    const check = document.createElement("button");
+    check.className = "check" + (isChecked ? " checked" : "");
+    check.innerHTML = isChecked ? "&#10003;" : "";
+    check.addEventListener("click", ()=>{
+      const st = loadState(currentWeek);
+      st.checked[key] = !st.checked[key];
+      saveState(currentWeek, st);
+      renderShop();
+    });
+
+    const nameWrap = document.createElement("div");
+    nameWrap.className = "shop-item";
+    const nameEl = document.createElement("div");
+    nameEl.className = "shop-item-name";
+    nameEl.innerHTML = capitalize(i.item) + (i.custom ? '<span class="custom-tag">tuyo</span>' : "") + basicPillHtml(i.item, true);
+    nameWrap.appendChild(nameEl);
+    const badge = nameEl.querySelector(".basic-pill");
+    if(badge){
+      badge.addEventListener("click", ()=>{
+        toggleBasic(i.item);
+        renderShop();
+      });
+    }
+
+    row.appendChild(check);
+    row.appendChild(nameWrap);
+
+    if(i.qty!=null){
+      const qtyInput = document.createElement("input");
+      qtyInput.type = "number";
+      qtyInput.className = "qty-input";
+      qtyInput.value = formatQty(i.qty);
+      qtyInput.step = "any";
+      qtyInput.min = "0";
+      qtyInput.addEventListener("change", ()=>{
+        const val = parseFloat(qtyInput.value);
+        const st = loadState(currentWeek);
+        if(i.custom){
+          const c = st.custom.find(x=>x.key===key);
+          if(c) c.qty = isNaN(val) ? null : val;
+        }else{
+          st.overrides[key] = isNaN(val) ? 0 : val;
+        }
+        saveState(currentWeek, st);
+      });
+      row.appendChild(qtyInput);
+      const unitEl = document.createElement("span");
+      unitEl.className = "unit-label";
+      unitEl.textContent = i.unit || "";
+      row.appendChild(unitEl);
+    }
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "del-btn";
+    delBtn.innerHTML = "&#10005;";
+    delBtn.setAttribute("aria-label", "Eliminar producto");
+    delBtn.addEventListener("click", ()=>{
+      const st = loadState(currentWeek);
+      if(i.custom){
+        st.custom = st.custom.filter(x=>x.key!==key);
+      }else{
+        st.removed.push(key);
+      }
+      delete st.checked[key];
+      saveState(currentWeek, st);
+      renderShop();
+    });
+    row.appendChild(delBtn);
+
+    listEl.appendChild(row);
+  });
+
+  const checkedCount = all.filter(i=>state.checked[i.key]).length;
+  document.getElementById("shop-count").textContent = `${checkedCount} de ${all.length} comprados`;
+}
+
+document.getElementById("reset-checks").addEventListener("click", ()=>{
+  const st = loadState(currentWeek);
+  st.checked = {};
+  saveState(currentWeek, st);
+  renderShop();
+});
+
+document.getElementById("hide-basics-check").addEventListener("change", (e)=>{
+  localStorage.setItem(HIDE_BASICS_KEY, e.target.checked ? "1" : "0");
+  renderShop();
+});
+
+document.getElementById("add-item-btn").addEventListener("click", ()=>{
+  const nameInput = document.getElementById("new-item-name");
+  const qtyInput = document.getElementById("new-item-qty");
+  const unitInput = document.getElementById("new-item-unit");
+  const name = nameInput.value.trim();
+  if(!name) return;
+  const qtyVal = qtyInput.value.trim() ? parseFloat(qtyInput.value) : null;
+  const unitVal = unitInput.value.trim() || null;
+  const st = loadState(currentWeek);
+  const newKey = "custom::" + Date.now() + "::" + name.toLowerCase();
+  st.custom = st.custom || [];
+  st.custom.push({key:newKey, item:name, qty:qtyVal, unit:unitVal});
+  saveState(currentWeek, st);
+  nameInput.value = "";
+  qtyInput.value = "";
+  unitInput.value = "";
+  renderShop();
+});
+
+document.getElementById("edit-toggle").addEventListener("click", ()=>{
+  editingMenu = !editingMenu;
+  const btn = document.getElementById("edit-toggle");
+  btn.classList.toggle("on", editingMenu);
+  document.getElementById("edit-toggle-label").textContent = editingMenu ? "Listo" : "Editar menú";
+  renderMenu();
+});
+
+document.getElementById("restore-link").addEventListener("click", ()=>{
+  if(confirm("Esto restablecerá el menú original de las 4 semanas y perderás tus cambios en el menú. ¿Continuar?")){
+    MENU = deepClone(DEFAULT_MENU);
+    saveMenu();
+    renderMenu();
+    renderShop();
+  }
+});
+
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    currentView = tab.dataset.view;
+    document.getElementById("view-menu").classList.toggle("active", currentView==="menu");
+    document.getElementById("view-shop").classList.toggle("active", currentView==="shop");
+  });
+});
+
+renderWeekPills();
+renderMenu();
+renderShop();
+</script>
+</body>
+</html>
