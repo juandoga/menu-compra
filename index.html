@@ -107,6 +107,18 @@ button{cursor:pointer;}
   padding:6px 0;border-radius:8px;transition:background .16s ease,color .16s ease;
 }
 .seg button[aria-pressed="true"]{background:var(--brand);color:var(--brand-on);}
+/* la semana que toca de verdad lleva un puntito debajo */
+.seg button{position:relative;}
+.seg button.now::after{
+  content:"";position:absolute;left:50%;bottom:2px;width:4px;height:4px;margin-left:-2px;
+  border-radius:50%;background:var(--accent);
+}
+.seg button.now[aria-pressed="true"]::after{background:var(--brand-on);}
+.hbtn{position:relative;}
+.hbtn.nudge::after{
+  content:"";position:absolute;top:-3px;right:-3px;width:9px;height:9px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--paper);
+}
 
 .view{padding-top:16px;}
 .view[hidden]{display:none!important;}
@@ -130,6 +142,43 @@ button{cursor:pointer;}
   font-size:12.5px;color:var(--ink-soft);
 }
 .offline svg{width:16px;height:16px;flex:0 0 auto;}
+
+/* avisos suaves (semana en curso, fin de semana, copia) */
+.note{
+  display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  background:var(--card-2);border:1px solid var(--line);
+  border-radius:12px;padding:10px 12px;margin-bottom:12px;
+  font-size:13px;color:var(--ink-soft);line-height:1.4;
+}
+.note > span{flex:1;min-width:0;}
+.note b{color:var(--ink);font-weight:600;}
+.note .linkbtn{flex:0 0 auto;}
+.note-q{display:block;font-weight:600;color:var(--ink);margin-bottom:8px;font-size:13.5px;}
+.pick4{display:flex;gap:6px;width:100%;}
+.pick4 button{
+  flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);
+  border-radius:9px;padding:9px 0;font-weight:700;font-size:14px;font-variant-numeric:tabular-nums;
+}
+.pick4 button[aria-pressed="true"]{background:var(--brand);color:var(--brand-on);border-color:var(--brand);}
+.foot-links{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 8px;}
+.swap-note{font-size:10.5px;color:var(--ink-faint);font-weight:500;letter-spacing:0;text-transform:none;margin-left:6px;}
+
+/* personas */
+.stepper{display:flex;align-items:center;gap:6px;flex:0 0 auto;}
+.stepper button{
+  width:28px;height:28px;border-radius:8px;border:1px solid var(--line);
+  background:var(--card-2);color:var(--ink);font-size:16px;font-weight:600;line-height:1;padding:0;
+}
+.stepper button[disabled]{opacity:.35;cursor:default;}
+.stepper output{min-width:18px;text-align:center;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+/* elegir con qué día cambiar */
+.chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chips button{
+  border:1px solid var(--line);background:var(--card);color:var(--ink-soft);
+  border-radius:99px;padding:6px 12px;font-size:12.5px;font-weight:600;
+}
+.chips button[aria-pressed="true"]{background:var(--brand);color:var(--brand-on);border-color:var(--brand);}
 
 /* --- Hoy --- */
 .mealcard{
@@ -660,7 +709,13 @@ const K_HIDE   = "menuCompraApp_hideBasics_v1";
 const K_WEEK   = "menuCompraApp_w2_";
 const K_THEME  = "menuCompraApp_theme_v1";
 const K_AISLES = "menuCompraApp_aisles_v1";
-const ALL_KEYS = [K_MENU,K_BASICS,K_HIDE,K_THEME,K_AISLES,K_WEEK+"0",K_WEEK+"1",K_WEEK+"2",K_WEEK+"3"];
+const K_START  = "menuCompraApp_cycleStart_v1";   /* lunes en que empezó una Semana 1 */
+const K_PEOPLE = "menuCompraApp_people_v1";       /* para cuántas personas se compra */
+const K_SWAPS  = "menuCompraApp_swaps_v1";        /* cambios de día, sólo para la semana real en curso */
+const K_BACKUP = "menuCompraApp_lastBackup_v1";   /* última vez que se guardó una copia */
+const K_SEEN   = "menuCompraApp_firstSeen_v1";    /* desde cuándo se usa esta versión */
+const K_SNOOZE = "menuCompraApp_backupSnooze_v1"; /* «recuérdamelo luego» */
+const ALL_KEYS = [K_MENU,K_BASICS,K_HIDE,K_THEME,K_AISLES,K_START,K_PEOPLE,K_WEEK+"0",K_WEEK+"1",K_WEEK+"2",K_WEEK+"3"];
 
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -706,12 +761,79 @@ function weekState(w){
 }
 function saveWeekState(w,s){ lsSet(K_WEEK+w, JSON.stringify(s)); }
 
+/* ---------- fechas y semana del ciclo ---------- */
+function dayStart(d){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()); }
+function mondayOf(d){ const x=dayStart(d); x.setDate(x.getDate()-((x.getDay()+6)%7)); return x; }
+function isoDate(d){
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function parseISO(s){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||""));
+  return m ? new Date(+m[1],+m[2]-1,+m[3]) : null;
+}
+/* Qué semana del menú (0 a 3) toca en una fecha. null si aún no se ha configurado. */
+function cycleWeekOn(date){
+  const start=parseISO(lsGet(K_START));
+  if(!start) return null;
+  const weeks=Math.round((mondayOf(date)-start)/(7*864e5));
+  return ((weeks%4)+4)%4;
+}
+/* «Esta semana toca la w»: guarda el lunes en que habría empezado la Semana 1. */
+function setCurrentWeek(w){
+  const m=mondayOf(new Date());
+  m.setDate(m.getDate()-7*w);
+  lsSet(K_START, isoDate(m));
+}
+
 /* ---------- estado ---------- */
-let week=0;
+let todayKey=isoDate(new Date());
+let todayIdx=(new Date().getDay()+6)%7;
+let curWeek=cycleWeekOn(new Date());     /* la semana que toca de verdad (o null) */
+let week = curWeek==null ? 0 : curWeek;  /* la semana que se está mirando */
 let view="hoy";
+let shopAutoWeek=false;                  /* la compra saltó sola a la semana siguiente */
+let shopDeclined=null;                   /* día en que dijiste «ver la de esta» */
 const openDays=new Set();
-const todayIdx=(new Date().getDay()+6)%7;
 openDays.add(todayIdx);
+
+/* ---------- cambios de día (sólo valen para la semana real en curso) ---------- */
+function loadSwaps(){
+  try{
+    const s=JSON.parse(lsGet(K_SWAPS));
+    if(s && s.monday===isoDate(mondayOf(new Date())) && Array.isArray(s.list)) return s;
+  }catch(e){}
+  return null;
+}
+function swapsFor(w){ const s=loadSwaps(); return (s && s.week===w) ? s.list : []; }
+function saveSwaps(w,list){
+  if(!list.length){ try{ localStorage.removeItem(K_SWAPS); }catch(e){} return; }
+  lsSet(K_SWAPS, JSON.stringify({monday:isoDate(mondayOf(new Date())), week:w, list:list}));
+}
+/* Devuelve la semana tal y como se ve: 7 días, cada uno con sus comidas.
+   Cada comida recuerda de qué día del menú viene (d, mi) para poder editarla. */
+function viewWeek(w){
+  const v=MENU[w].map((day,d)=>day.meals.map((meal,mi)=>({meal,d,mi})));
+  swapsFor(w).forEach(s=>{
+    if(s.meal==null){ const t=v[s.a]; v[s.a]=v[s.b]; v[s.b]=t; return; }
+    const ia=v[s.a].findIndex(r=>r.meal.name===s.meal);
+    const ib=v[s.b].findIndex(r=>r.meal.name===s.meal);
+    if(ia<0 || ib<0) return;
+    const t=v[s.a][ia]; v[s.a][ia]=v[s.b][ib]; v[s.b][ib]=t;
+  });
+  return v;
+}
+
+/* ---------- personas ---------- */
+const BASE_PEOPLE=2; /* el menú está pensado para 2 */
+function people(){ const n=parseInt(lsGet(K_PEOPLE),10); return n>=1 && n<=12 ? n : BASE_PEOPLE; }
+function scaleQty(q,u,f){
+  if(q==null || f===1) return q;
+  const v=q*f;
+  const unit=norm(u||"");
+  if(!unit || /^(ud|uds|unidad|unidades|diente|dientes|lata|latas|paquete|paquetes|bote|botes|pieza|piezas)$/.test(unit)) return Math.ceil(v-1e-9);
+  if(v>=20) return Math.round(v/5)*5;
+  return Math.round(v*10)/10;
+}
 
 function eachDish(fn){
   MENU.forEach((wk,wi)=>wk.forEach((day,di)=>day.meals.forEach((meal,mi)=>
@@ -741,8 +863,8 @@ function toggleBasic(shortName){
 
 function buildList(w){
   const map=new Map();
-  MENU[w].forEach((day,dayIdx)=>{
-    day.meals.forEach(meal=>{
+  viewWeek(w).forEach((refs,dayIdx)=>{
+    refs.forEach(({meal})=>{
       meal.dishes.forEach(dish=>{
         dish.ingredients.forEach(i=>{
           const p=parseItem(i.item);
@@ -750,26 +872,51 @@ function buildList(w){
           const k=norm(p.short);
           let e=map.get(k);
           if(!e){
-            e={key:k,qty:null,unit:null,item:p.short,hint:p.hint,custom:false,allOptional:true,origins:[]};
+            e={key:k,item:p.short,hint:p.hint,custom:false,allOptional:true,origins:[],parts:[],firstUnit:null};
             map.set(k,e);
           }
           if(!e.hint && p.hint) e.hint=p.hint;
           if(!p.optional) e.allOptional=false;
-          if(e.unit==null && i.unit) e.unit=i.unit;
-          if(i.qty!=null && (i.unit||null)===(e.unit||null)) e.qty=(e.qty||0)+i.qty;
+          if(e.firstUnit==null && i.unit) e.firstUnit=i.unit;
+          /* cada unidad suma por separado: 2 ud + 150 g, nada se pierde */
+          if(i.qty!=null){
+            const u=i.unit||null;
+            const part=e.parts.find(x=>norm(x.unit||"")===norm(u||""));
+            if(part) part.qty+=i.qty; else e.parts.push({qty:i.qty,unit:u});
+          }
           e.origins.push({day:dayIdx,meal:meal.name,dish:dish.name,qty:i.qty,unit:i.unit});
         });
       });
     });
   });
-  return [...map.values()];
+  return [...map.values()].map(e=>{
+    const first=e.parts[0];
+    e.qty = first ? first.qty : null;
+    e.unit = first ? first.unit : e.firstUnit;
+    e.extra = e.parts.slice(1);
+    delete e.parts; delete e.firstUnit;
+    return e;
+  });
 }
 function shopItems(w){
   const st=weekState(w);
+  const f=people()/BASE_PEOPLE;
   const base=buildList(w).filter(i=>!st.removed.includes(i.key));
-  base.forEach(i=>{ if(Object.prototype.hasOwnProperty.call(st.overrides,i.key)) i.qty=st.overrides[i.key]; });
-  const custom=(st.custom||[]).map(c=>({...c,custom:true,allOptional:false,hint:null,origins:[]}));
+  base.forEach(i=>{
+    if(Object.prototype.hasOwnProperty.call(st.overrides,i.key)){
+      i.qty=st.overrides[i.key]; i.extra=[]; i.overridden=true; /* la cantidad que pusiste tú manda */
+    }else{
+      i.qty=scaleQty(i.qty,i.unit,f);
+      i.extra=i.extra.map(x=>({qty:scaleQty(x.qty,x.unit,f),unit:x.unit}));
+    }
+  });
+  const custom=(st.custom||[]).map(c=>({...c,custom:true,allOptional:false,hint:null,origins:[],extra:[]}));
   return {st:st, all:base.concat(custom)};
+}
+/* texto de la cantidad total de un producto de la lista */
+function itemQtyText(i){
+  const parts=[qtyText(i.qty,i.unit)].concat((i.extra||[]).map(x=>qtyText(x.qty,x.unit))).filter(Boolean);
+  return parts.join(" + ");
 }
 
 function fmt(n){ return Math.round(n*100)/100; }
@@ -811,12 +958,14 @@ const snack=document.getElementById("snack");
 const snackMsg=document.getElementById("snackMsg");
 const snackUndo=document.getElementById("snackUndo");
 let undoFn=null, snackTimer=null, hideTimer=null;
-function showUndo(msg,fn){
+function showUndo(msg,fn){ showSnack(msg,"Deshacer",fn,6000); }
+/* aviso abajo con un botón; ms=0 lo deja fijo hasta que se toque */
+function showSnack(msg,label,fn,ms){
   clearTimeout(snackTimer); clearTimeout(hideTimer);
-  undoFn=fn; snackMsg.textContent=msg;
+  undoFn=fn; snackMsg.textContent=msg; snackUndo.textContent=label;
   snack.hidden=false;
   requestAnimationFrame(()=>snack.classList.add("on"));
-  snackTimer=setTimeout(hideUndo,6000);
+  if(ms) snackTimer=setTimeout(hideUndo,ms);
 }
 function hideUndo(){
   clearTimeout(snackTimer);
@@ -871,7 +1020,7 @@ function prepLine(dish){
   d.appendChild(t);
   return d;
 }
-function dishBlock(dish,dayIdx,mealIdx,dishIdx,withEdit){
+function dishBlock(dish,dayIdx,mealIdx,dishIdx,withEdit,shownDay){
   const d=document.createElement("div");
   d.className="dish";
   const dh=document.createElement("div");
@@ -884,7 +1033,7 @@ function dishBlock(dish,dayIdx,mealIdx,dishIdx,withEdit){
     eb.className="icon-btn";
     eb.appendChild(svg(P_PENCIL,"2"));
     eb.appendChild(document.createTextNode("Editar"));
-    eb.addEventListener("click",()=>openDishSheet(dayIdx,mealIdx,dishIdx));
+    eb.addEventListener("click",()=>openDishSheet(dayIdx,mealIdx,dishIdx,shownDay));
     dh.appendChild(eb);
   }
   d.appendChild(dh);
@@ -894,16 +1043,80 @@ function dishBlock(dish,dayIdx,mealIdx,dishIdx,withEdit){
   return d;
 }
 
+/* nombre de la comida, con «de martes» si viene cambiada de otro día */
+function mealNameEl(ref,shownDay){
+  const mn=document.createElement("span");
+  mn.className="meal-name"; mn.textContent=ref.meal.name;
+  if(ref.d!==shownDay){
+    const s=document.createElement("span");
+    s.className="swap-note"; s.textContent="· cambiado del "+DAYS[ref.d].full.toLowerCase();
+    mn.appendChild(s);
+  }
+  return mn;
+}
+function linkBtn(text,fn){
+  const b=document.createElement("button");
+  b.className="linkbtn"; b.textContent=text;
+  b.addEventListener("click",fn);
+  return b;
+}
+/* elegir 1-2-3-4; marca la actual */
+function pick4(current,onPick){
+  const row=document.createElement("div");
+  row.className="pick4";
+  for(let w=0;w<4;w++){
+    const b=document.createElement("button");
+    b.textContent=String(w+1);
+    b.setAttribute("aria-label","Semana "+(w+1));
+    b.setAttribute("aria-pressed", w===current?"true":"false");
+    b.addEventListener("click",()=>onPick(w));
+    row.appendChild(b);
+  }
+  return row;
+}
+function applyCurrentWeek(w){
+  setCurrentWeek(w);
+  curWeek=w; week=w; shopAutoWeek=false;
+  renderWeeks(); render();
+}
+
 /* ---------- vista: Hoy ---------- */
 function renderHoy(){
   const host=document.getElementById("viewHoy");
   host.textContent="";
-  const day=MENU[week][todayIdx];
+  const vw=viewWeek(week);
+  const refs=vw[todayIdx];
 
-  /* avisos de mañana */
-  const tomorrowIdx=(todayIdx+1)%7;
+  /* primera vez: preguntar qué semana toca */
+  if(curWeek==null){
+    const n=document.createElement("div");
+    n.className="note";
+    const q=document.createElement("span");
+    q.className="note-q";
+    q.textContent="¿Qué semana del menú toca esta semana?";
+    const s=document.createElement("span");
+    s.style.flexBasis="100%";
+    s.append(q, document.createTextNode("Dímelo una vez y la app llevará la cuenta sola cada lunes."));
+    n.append(s, pick4(null, applyCurrentWeek));
+    host.appendChild(n);
+  }else if(week!==curWeek){
+    const n=document.createElement("div");
+    n.className="note";
+    const s=document.createElement("span");
+    s.append("Estás mirando la ");
+    const b1=document.createElement("b"); b1.textContent="semana "+(week+1);
+    s.append(b1,". Esta semana toca la "+(curWeek+1)+".");
+    n.append(s, linkBtn("Volver",()=>{ week=curWeek; shopAutoWeek=false; renderWeeks(); render(); }));
+    host.appendChild(n);
+  }
+
+  const bn=backupNote();
+  if(bn) host.appendChild(bn);
+
+  /* avisos de mañana (el domingo, mañana ya es la semana siguiente) */
+  const tomorrowRefs = todayIdx===6 ? viewWeek((week+1)%4)[0] : vw[todayIdx+1];
   const warn=[];
-  MENU[week][tomorrowIdx].meals.forEach(m=>m.dishes.forEach(d=>{
+  tomorrowRefs.forEach(r=>r.meal.dishes.forEach(d=>{
     if(d.prep && String(d.prep).trim() && d.prepWarn!==false) warn.push({dish:d.name,prep:d.prep});
   }));
   if(warn.length){
@@ -927,12 +1140,11 @@ function renderHoy(){
     host.appendChild(b);
   }
 
-  day.meals.forEach((meal,mealIdx)=>{
+  refs.forEach(ref=>{
+    const meal=ref.meal;
     const card=document.createElement("div");
     card.className="mealcard"+(todayIdx>=5?" wknd":"");
-    const mn=document.createElement("span");
-    mn.className="meal-name"; mn.textContent=meal.name;
-    card.appendChild(mn);
+    card.appendChild(mealNameEl(ref,todayIdx));
     const list=document.createElement("div");
     list.className="dishes";
     if(!meal.dishes.length){
@@ -942,11 +1154,17 @@ function renderHoy(){
       list.appendChild(e);
     }
     meal.dishes.forEach((dish,dishIdx)=>{
-      list.appendChild(dishBlock(dish,todayIdx,mealIdx,dishIdx,true));
+      list.appendChild(dishBlock(dish,ref.d,ref.mi,dishIdx,true,todayIdx));
     });
     card.appendChild(list);
     host.appendChild(card);
   });
+
+  const foot=document.createElement("div");
+  foot.className="foot-links";
+  foot.appendChild(linkBtn("¿No te apetece? Cambiar con otro día",()=>openSwapSheet(todayIdx)));
+  if(curWeek!=null) foot.appendChild(linkBtn("Cambiar la semana en curso",openWeekSheet));
+  host.appendChild(foot);
 }
 
 /* ---------- vista: Semana ---------- */
@@ -964,7 +1182,7 @@ function renderSemana(){
   sb.addEventListener("click",openSearchSheet);
   host.appendChild(sb);
 
-  MENU[week].forEach((day,dayIdx)=>{
+  viewWeek(week).forEach((refs,dayIdx)=>{
     const art=document.createElement("article");
     art.className="day"+(openDays.has(dayIdx)?" open":"")+(dayIdx>=5?" wknd":"");
 
@@ -988,7 +1206,7 @@ function renderSemana(){
     meta.appendChild(nm);
     const sum=document.createElement("span");
     sum.className="sum";
-    day.meals.forEach(meal=>{
+    refs.forEach(({meal})=>{
       const k=document.createElement("span");
       k.className="sum-k"; k.textContent=meal.name;
       const v=document.createElement("span");
@@ -1016,18 +1234,18 @@ function renderSemana(){
     const pad=document.createElement("div");
     pad.className="day-body-pad";
 
-    day.meals.forEach((meal,mealIdx)=>{
+    refs.forEach(ref=>{
+      const meal=ref.meal;
       const sec=document.createElement("div");
       sec.className="meal";
       const mh=document.createElement("div");
       mh.className="meal-head";
-      const mn=document.createElement("span");
-      mn.className="meal-name"; mn.textContent=meal.name;
+      const mn=mealNameEl(ref,dayIdx);
       const mr=document.createElement("span"); mr.className="meal-rule";
       mh.append(mn,mr);
       sec.appendChild(mh);
       meal.dishes.forEach((dish,dishIdx)=>{
-        sec.appendChild(dishBlock(dish,dayIdx,mealIdx,dishIdx,true));
+        sec.appendChild(dishBlock(dish,ref.d,ref.mi,dishIdx,true,dayIdx));
       });
       const add=document.createElement("button");
       add.className="add-dish";
@@ -1035,11 +1253,15 @@ function renderSemana(){
       add.addEventListener("click",()=>{
         meal.dishes.push({name:"Nuevo plato",ingredients:[]});
         saveMenu(); openDays.add(dayIdx); renderSemana();
-        openDishSheet(dayIdx,mealIdx,meal.dishes.length-1);
+        openDishSheet(ref.d,ref.mi,meal.dishes.length-1,dayIdx);
       });
       sec.appendChild(add);
       pad.appendChild(sec);
     });
+    const sl=document.createElement("div");
+    sl.className="foot-links"; sl.style.margin="10px 0 0";
+    sl.appendChild(linkBtn("Cambiar con otro día",()=>openSwapSheet(dayIdx)));
+    pad.appendChild(sl);
 
     bin.appendChild(pad);
     body.appendChild(bin);
@@ -1062,6 +1284,19 @@ function renderShop(){
     t.textContent="Sin conexión — la lista sigue aquí";
     off.appendChild(t);
     host.appendChild(off);
+  }
+
+  if(shopAutoWeek){
+    const n=document.createElement("div");
+    n.className="note";
+    const s=document.createElement("span");
+    s.append("Es fin de semana, así que te enseño la compra de la ");
+    const b1=document.createElement("b"); b1.textContent="semana que viene ("+(week+1)+")";
+    s.append(b1,".");
+    n.append(s, linkBtn("Ver la de esta",()=>{
+      shopAutoWeek=false; shopDeclined=todayKey; week=curWeek; renderWeeks(); render();
+    }));
+    host.appendChild(n);
   }
 
   const hide = lsGet(K_HIDE)==="1";
@@ -1104,6 +1339,27 @@ function renderShop(){
   sw.addEventListener("click",()=>{ lsSet(K_HIDE, hide?"0":"1"); renderShop(); });
   srow.append(slab,sw);
 
+  /* para cuántas personas */
+  const prow=document.createElement("div");
+  prow.className="switchrow";
+  const plab=document.createElement("span");
+  const n=people();
+  plab.textContent = n===BASE_PEOPLE ? "Cantidades para "+n+" personas" : "Cantidades para "+n+" personas (el menú es para "+BASE_PEOPLE+")";
+  const step=document.createElement("div");
+  step.className="stepper";
+  const minus=document.createElement("button");
+  minus.textContent="−"; minus.setAttribute("aria-label","Una persona menos");
+  if(n<=1) minus.disabled=true;
+  minus.addEventListener("click",()=>{ lsSet(K_PEOPLE,String(n-1)); renderShop(); });
+  const out=document.createElement("output");
+  out.textContent=String(n);
+  const plus=document.createElement("button");
+  plus.textContent="+"; plus.setAttribute("aria-label","Una persona más");
+  if(n>=12) plus.disabled=true;
+  plus.addEventListener("click",()=>{ lsSet(K_PEOPLE,String(n+1)); renderShop(); });
+  step.append(minus,out,plus);
+  prow.append(plab,step);
+
   const tools=document.createElement("div");
   tools.className="toolrow";
   const shareB=document.createElement("button");
@@ -1118,7 +1374,7 @@ function renderShop(){
   sortB.addEventListener("click",openAisleSheet);
   tools.append(shareB,sortB);
 
-  card.append(top,bar,srow,tools);
+  card.append(top,bar,srow,prow,tools);
   host.appendChild(card);
 
   if(!shown.length){
@@ -1165,7 +1421,7 @@ function renderShop(){
       const t=document.createElement("span"); t.className="tag basic"; t.textContent="básico"; tags.appendChild(t);
     }
     const q=document.createElement("span");
-    q.className="row-qty"; q.textContent=qtyText(i.qty,i.unit);
+    q.className="row-qty"; q.textContent=itemQtyText(i);
     const ch=document.createElement("span");
     ch.className="row-chev";
     ch.appendChild(svg(P_RIGHT,"2.2"));
@@ -1346,7 +1602,10 @@ function openIngredientSheet(item){
     if(!item.custom){
       const note=document.createElement("p");
       note.className="hintline";
-      note.textContent="Suma de todas las comidas de la semana. Puedes ajustarla.";
+      let t="Suma de todas las comidas de la semana. Puedes ajustarla.";
+      if(item.extra && item.extra.length) t+=" Viene en unidades distintas ("+itemQtyText(item)+"): si la cambias, se queda sólo la tuya.";
+      if(!item.overridden && people()!==BASE_PEOPLE) t+=" Ya está calculada para "+people()+" personas.";
+      note.textContent=t;
       qb.appendChild(note);
     }
     host.appendChild(qb);
@@ -1409,12 +1668,13 @@ function openIngredientSheet(item){
 }
 
 /* --- editor de plato --- */
-function openDishSheet(dayIdx,mealIdx,dishIdx){
+function openDishSheet(dayIdx,mealIdx,dishIdx,shownDay){
   openSheet(host=>{
     const meal=MENU[week][dayIdx].meals[mealIdx];
     const dish=meal && meal.dishes[dishIdx];
     if(!dish){ closeSheet(); return; }
-    sheetHeader(host,"Editar plato",DAYS[dayIdx].full+" · "+meal.name+" · Semana "+(week+1));
+    const sd = shownDay==null ? dayIdx : shownDay;
+    sheetHeader(host,"Editar plato",DAYS[sd].full+" · "+meal.name+" · Semana "+(week+1));
 
     const nb=blockEl("Nombre del plato");
     const ni=document.createElement("input");
@@ -1745,7 +2005,7 @@ function listAsText(onlyLeft){
     if(!part.length) return;
     lines.push(sectionLabel(secId).toUpperCase());
     part.forEach(i=>{
-      const q=qtyText(i.qty,i.unit);
+      const q=itemQtyText(i);
       lines.push("- "+cap(i.item)+(q?" — "+q:""));
     });
     lines.push("");
@@ -1754,7 +2014,7 @@ function listAsText(onlyLeft){
   if(opt.length){
     lines.push("OPCIONALES");
     opt.forEach(i=>{
-      const q=qtyText(i.qty,i.unit);
+      const q=itemQtyText(i);
       lines.push("- "+cap(i.item)+(q?" — "+q:""));
     });
     lines.push("");
@@ -1820,6 +2080,39 @@ function openShareSheet(){
 }
 
 /* --- copia de seguridad --- */
+const DAY_MS=864e5;
+function markBackup(){ lsSet(K_BACKUP,String(Date.now())); updateNudge(); if(view==="hoy") renderHoy(); }
+/* ¿hay algo tuyo que merezca copia? (cambios en el menú, la lista, pasillos…) */
+function hasOwnData(){
+  return [K_MENU,K_BASICS,K_AISLES,K_WEEK+"0",K_WEEK+"1",K_WEEK+"2",K_WEEK+"3"].some(k=>lsGet(k)!=null);
+}
+function backupDue(){
+  if(!hasOwnData()) return false;
+  const now=Date.now();
+  if(lsGet(K_SEEN)==null) lsSet(K_SEEN,String(now));
+  const snooze=parseInt(lsGet(K_SNOOZE),10);
+  if(snooze && now<snooze) return false;
+  const last=parseInt(lsGet(K_BACKUP),10) || parseInt(lsGet(K_SEEN),10) || now;
+  return now-last > 30*DAY_MS;
+}
+function updateNudge(){ document.getElementById("dataBtn").classList.toggle("nudge", backupDue()); }
+function backupNote(){
+  if(!backupDue()) return null;
+  const n=document.createElement("div");
+  n.className="note";
+  const s=document.createElement("span");
+  const last=parseInt(lsGet(K_BACKUP),10);
+  s.textContent = last ? "Hace más de un mes que no guardas una copia de tu menú."
+                       : "Aún no has guardado ninguna copia de tu menú.";
+  const acts=document.createElement("span");
+  acts.style.flex="0 0 auto"; acts.style.display="flex"; acts.style.gap="10px";
+  acts.append(
+    linkBtn("Guardar",openDataSheet),
+    linkBtn("Luego",()=>{ lsSet(K_SNOOZE,String(Date.now()+7*DAY_MS)); updateNudge(); renderHoy(); })
+  );
+  n.append(s,acts);
+  return n;
+}
 function collectData(){
   const out={app:"menuse",version:1,exported:new Date().toISOString(),data:{}};
   ALL_KEYS.forEach(k=>{ const v=lsGet(k); if(v!=null) out.data[k]=v; });
@@ -1843,6 +2136,7 @@ function openDataSheet(){
       let ok=false;
       try{ ok=document.execCommand("copy"); }catch(e){}
       if(!ok && navigator.clipboard){ navigator.clipboard.writeText(json).catch(()=>{}); ok=true; }
+      if(ok) markBackup();
       copyBtn.textContent = ok ? "Copiado" : "Selecciona y copia";
       setTimeout(()=>{copyBtn.textContent="Copiar";},2000);
     });
@@ -1856,6 +2150,7 @@ function openDataSheet(){
         a.href=url;
         a.download="menuse-"+new Date().toISOString().slice(0,10)+".json";
         document.body.appendChild(a); a.click();
+        markBackup();
         setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },500);
       }catch(e){
         dlBtn.textContent="Usa Copiar";
@@ -1928,6 +2223,118 @@ function openDataSheet(){
   });
 }
 
+/* --- semana en curso --- */
+function openWeekSheet(){
+  openSheet(host=>{
+    sheetHeader(host,"Semana en curso","Qué semana del menú toca esta semana");
+    const b=blockEl("Esta semana toca la");
+    b.appendChild(pick4(curWeek, w=>{
+      const before=lsGet(K_START);
+      applyCurrentWeek(w); closeSheet();
+      showUndo("Ahora toca la semana "+(w+1), ()=>{
+        if(before) lsSet(K_START,before);
+        curWeek=cycleWeekOn(new Date()); week=curWeek==null?0:curWeek;
+        renderWeeks(); render();
+      });
+    }));
+    const h=document.createElement("p");
+    h.className="hintline";
+    h.textContent="Cada lunes pasa sola a la siguiente, y después de la 4 vuelve a la 1. Los números de arriba siguen sirviendo para mirar otras semanas.";
+    b.appendChild(h);
+    host.appendChild(b);
+  });
+}
+
+/* --- cambiar con otro día --- */
+function openSwapSheet(dayIdx){
+  openSheet(host=>{
+    const vw=viewWeek(week);
+    const names=vw[dayIdx].map(r=>r.meal.name);
+    let what=null; /* null = todo el día */
+    sheetHeader(host,"Cambiar el "+DAYS[dayIdx].full.toLowerCase(),"Semana "+(week+1)+" · sólo para esta semana");
+
+    const wb=blockEl("Qué quieres cambiar");
+    const chips=document.createElement("div");
+    chips.className="chips";
+    wb.appendChild(chips);
+    host.appendChild(wb);
+
+    const lb=blockEl("Con qué día");
+    const list=document.createElement("div");
+    list.className="rows";
+    lb.appendChild(list);
+    const h=document.createElement("p");
+    h.className="hintline";
+    h.textContent="El lunes que viene el menú vuelve a estar como siempre. La lista de la compra no cambia, porque los platos siguen siendo de la misma semana. Para cambiarlo para siempre, edita los platos.";
+    lb.appendChild(h);
+    host.appendChild(lb);
+
+    function draw(){
+      chips.textContent="";
+      [null].concat(names.length>1 ? names : []).forEach(n=>{
+        const c=document.createElement("button");
+        c.textContent = n==null ? "Todo el día" : "Sólo "+n.toLowerCase();
+        c.setAttribute("aria-pressed", n===what?"true":"false");
+        c.addEventListener("click",()=>{ what=n; draw(); });
+        chips.appendChild(c);
+      });
+      list.textContent="";
+      let count=0;
+      for(let d=0;d<7;d++){
+        if(d===dayIdx) continue;
+        const refs = what==null ? vw[d] : vw[d].filter(r=>r.meal.name===what);
+        if(!refs.length) continue;
+        count++;
+        const b=document.createElement("button");
+        b.className="hit";
+        const txt=document.createElement("span");
+        txt.style.flex="1"; txt.style.minWidth="0";
+        const meta=document.createElement("span");
+        meta.className="hit-meta"; meta.textContent=DAYS[d].full+(d===todayIdx?" · hoy":"");
+        txt.appendChild(meta);
+        refs.forEach(r=>{
+          const nm=document.createElement("span");
+          nm.className="hit-name";
+          nm.style.fontWeight="500"; nm.style.fontSize="13.5px";
+          nm.textContent=(what==null ? r.meal.name+": " : "")+(r.meal.dishes.map(x=>x.name).join(", ")||"—");
+          txt.appendChild(nm);
+        });
+        b.append(txt, svg(P_RIGHT,"2.2"));
+        b.addEventListener("click",()=>{
+          const before=swapsFor(week).slice();
+          saveSwaps(week, before.concat([{a:dayIdx,b:d,meal:what}]));
+          closeSheet(); render();
+          showUndo((what==null?"Días":what)+" cambiados: "+DAYS[dayIdx].full.toLowerCase()+" ↔ "+DAYS[d].full.toLowerCase(), ()=>{
+            saveSwaps(week,before); render();
+          });
+        });
+        list.appendChild(b);
+      }
+      if(!count){
+        const p=document.createElement("p");
+        p.className="hintline"; p.style.margin="10px 12px";
+        p.textContent="Ningún otro día tiene "+String(what).toLowerCase()+".";
+        list.appendChild(p);
+      }
+    }
+    draw();
+
+    if(swapsFor(week).length){
+      const acts=document.createElement("div");
+      acts.className="sheet-actions";
+      const rst=document.createElement("button");
+      rst.className="textdanger"; rst.textContent="Dejar la semana como estaba";
+      rst.addEventListener("click",()=>{
+        const before=swapsFor(week).slice();
+        saveSwaps(week,[]); closeSheet(); render();
+        showUndo("Semana como estaba", ()=>{ saveSwaps(week,before); render(); });
+      });
+      acts.appendChild(rst);
+      host.appendChild(acts);
+    }
+  });
+}
+
 /* ---------- navegación ---------- */
 function renderWeeks(){
   const seg=document.getElementById("weekSeg");
@@ -1936,8 +2343,9 @@ function renderWeeks(){
     const b=document.createElement("button");
     b.textContent=String(w+1);
     b.setAttribute("aria-pressed", w===week?"true":"false");
-    b.setAttribute("aria-label","Semana "+(w+1));
-    b.addEventListener("click",()=>{ week=w; renderWeeks(); render(); });
+    b.setAttribute("aria-label","Semana "+(w+1)+(w===curWeek?" (la de esta semana)":""));
+    if(w===curWeek) b.classList.add("now");
+    b.addEventListener("click",()=>{ week=w; shopAutoWeek=false; renderWeeks(); render(); });
     seg.appendChild(b);
   }
 }
@@ -1952,6 +2360,14 @@ function render(){
 }
 function setView(v){
   view=v;
+  /* sábado y domingo: la compra enseña ya la semana que viene */
+  if(v==="shop"){
+    if(!shopAutoWeek && curWeek!=null && week===curWeek && todayIdx>=5 && shopDeclined!==todayKey){
+      week=(curWeek+1)%4; shopAutoWeek=true; renderWeeks();
+    }
+  }else if(shopAutoWeek){
+    week=curWeek; shopAutoWeek=false; renderWeeks();
+  }
   document.getElementById("viewHoy").hidden = v!=="hoy";
   document.getElementById("viewSemana").hidden = v!=="semana";
   document.getElementById("viewShop").hidden = v!=="shop";
@@ -1983,14 +2399,43 @@ themeBtn.addEventListener("click",()=>{
 window.addEventListener("online", ()=>{ if(view==="shop") renderShop(); });
 window.addEventListener("offline",()=>{ if(view==="shop") renderShop(); });
 
-/* sin conexión */
+/* Si la app se queda abierta en segundo plano y cambia el día, ponerse al día al volver */
+function checkDate(){
+  const k=isoDate(new Date());
+  if(k===todayKey) return;
+  todayKey=k;
+  todayIdx=(new Date().getDay()+6)%7;
+  curWeek=cycleWeekOn(new Date());
+  if(curWeek!=null) week=curWeek;
+  shopAutoWeek=false;
+  openDays.clear(); openDays.add(todayIdx);
+  renderWeeks(); updateNudge(); setView(view);
+}
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden) checkDate(); });
+window.addEventListener("focus",checkDate);
+setInterval(()=>{ if(!document.hidden) checkDate(); },60000);
+
+/* sin conexión + aviso de versión nueva */
+let updateShown=false;
+function showUpdate(){
+  if(updateShown) return;
+  updateShown=true;
+  showSnack("Hay una versión nueva de Menuse","Recargar",()=>location.reload(),0);
+}
 if("serviceWorker" in navigator && location.protocol==="https:"){
+  const hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("message",e=>{
+    if(e.data && e.data.type==="update") showUpdate();
+  });
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{ if(hadController) showUpdate(); });
   window.addEventListener("load",()=>{
     navigator.serviceWorker.register("sw.js").catch(()=>{});
+    navigator.serviceWorker.ready.then(r=>{ if(r.active) r.active.postMessage({type:"hello"}); }).catch(()=>{});
   });
 }
 
 renderWeeks();
+updateNudge();
 setView("hoy");
 </script>
 </body>
