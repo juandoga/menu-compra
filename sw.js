@@ -1,10 +1,31 @@
 /* Menuse — service worker: la app y la lista funcionan sin conexión.
-   Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…). */
-const CACHE = "menuse-v2";
+   Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…).
+   Si creas un archivo nuevo en js/ o css/, añádelo a la lista ASSETS. */
+const CACHE = "menuse-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
+  "./css/styles.css",
+  "./js/app.js",
+  "./js/model/calendar.js",
+  "./js/model/defaultMenu.js",
+  "./js/model/repository.js",
+  "./js/model/rules.js",
+  "./js/model/sections.js",
+  "./js/model/storage.js",
+  "./js/model/text.js",
+  "./js/view/compraView.js",
+  "./js/view/dishBlock.js",
+  "./js/view/dom.js",
+  "./js/view/hoyView.js",
+  "./js/view/semanaView.js",
+  "./js/view/sheets/dataSheet.js",
+  "./js/view/sheets/dishSheet.js",
+  "./js/view/sheets/searchSheet.js",
+  "./js/view/sheets/shopSheets.js",
+  "./js/view/sheets/weekSheets.js",
+  "./js/viewmodel/appViewModel.js",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-maskable-192.png",
@@ -46,24 +67,25 @@ self.addEventListener("message", e => {
   }
 });
 
-/* Firma de una respuesta: sirve para saber si la página ha cambiado */
+/* Firma de una respuesta: sirve para saber si un archivo ha cambiado */
 function stamp(res) {
   return res.headers.get("etag") || res.headers.get("last-modified") || "";
 }
 
 /* Sirve lo guardado al instante y refresca por detrás.
-   Si la página que llega de internet es distinta de la guardada, avisa a la app. */
+   Si un archivo de la app que llega de internet es distinto del guardado, avisa a la app. */
 self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
-  const isPage = req.mode === "navigate" || /\/(index\.html)?$/.test(new URL(req.url).pathname);
+  /* archivos propios de la app (no las fuentes de Google): si cambian, hay versión nueva */
+  const isOwn = new URL(req.url).origin === self.location.origin;
   const hitP = caches.match(req);
   const netP = hitP.then(hit => fetch(req).then(res => ({ hit, res, copy: res.clone() })));
   /* trabajo de fondo: guardar lo nuevo y, si la página cambió, avisar */
   e.waitUntil(
     netP.then(({ hit, res, copy }) => {
       if (!(res && res.status === 200 && (res.type === "basic" || res.type === "cors"))) return;
-      const changed = isPage && hit && stamp(hit) && stamp(res) && stamp(hit) !== stamp(res);
+      const changed = isOwn && hit && stamp(hit) && stamp(res) && stamp(hit) !== stamp(res);
       return caches.open(CACHE)
         .then(c => c.put(req, copy))
         .then(() => changed ? new Promise(r => setTimeout(r, 1500)).then(tellEveryone) : null);
