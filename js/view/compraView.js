@@ -7,8 +7,13 @@ export function renderCompra(host,vm){
   const d=vm.compra();
   host.textContent="";
 
+  host.append(el("div",{className:"vhead"},
+    el("h1",{text:"Compra"}),
+    el("button",{className:"ibtn","aria-label":"Compartir la lista",onClick:()=>openShareSheet(vm)},svg(ICON.share,"2")),
+    el("button",{className:"ibtn","aria-label":"Orden de los pasillos",onClick:()=>openAisleSheet(vm)},svg(ICON.sort,"2"))));
+
   if(!navigator.onLine){
-    host.append(el("div",{className:"offline"},svg(ICON.off,"1.7"),el("span",{text:"Sin conexión — la lista sigue aquí"})));
+    host.append(el("div",{className:"offline"},svg(ICON.off,"1.8"),el("span",{text:"Sin conexión — la lista sigue aquí"})));
   }
   if(d.autoWeek){
     host.append(note(
@@ -16,61 +21,62 @@ export function renderCompra(host,vm){
       linkBtn("Ver la de esta",()=>vm.declineAutoWeek())));
   }
 
-  /* tarjeta de arriba: progreso y ajustes */
-  const peopleLabel = d.people===d.basePeople ? "Cantidades para "+d.people+" personas"
-                    : "Cantidades para "+d.people+" personas (el menú es para "+d.basePeople+")";
-  host.append(el("div",{className:"progress-card"},
-    el("div",{className:"progress-top"},
-      el("div",{className:"progress-num"},String(d.done),el("span",{text:" de "+d.total+" comprados"})),
-      el("button",{className:"linkbtn",text:"Compra hecha",onClick:()=>openCloseSheet(vm)})),
-    el("div",{className:"bar"},el("i",{style:{width:d.pct+"%"}})),
-    el("div",{className:"switchrow"},
-      el("span",{text:"Ocultar básicos de despensa"}),
-      switchBtn("Ocultar básicos de despensa",d.hideBasics,()=>vm.toggleHideBasics())),
-    el("div",{className:"switchrow"},
-      el("span",{text:peopleLabel}),
+  /* tarjeta fuerte: cuánto llevas, personas y ajustes */
+  const left=d.total-d.done;
+  host.append(el("div",{className:"pcard"},
+    el("div",{className:"ptop"},
+      el("div",{className:"pnum"},el("b",{text:String(d.done)}),el("span",{text:"/ "+d.total})),
+      el("div",{className:"pside"},
+        el("b",{text:"Semana "+(vm.week+1)}),
+        el("span",{text: left ? "quedan "+left : "¡todo comprado!"}))),
+    el("div",{className:"pbar"},el("i",{style:{width:d.pct+"%"}})),
+    el("div",{className:"prow"},
+      el("span",{text:"Cantidades para"}),
       el("div",{className:"stepper"},
         el("button",{text:"−","aria-label":"Una persona menos",disabled:d.people<=1,onClick:()=>vm.changePeople(-1)}),
-        el("output",{text:String(d.people)}),
-        el("button",{text:"+","aria-label":"Una persona más",disabled:d.people>=12,onClick:()=>vm.changePeople(1)}))),
-    el("div",{className:"toolrow"},
-      el("button",{className:"tool",onClick:()=>openShareSheet(vm)},svg(ICON.share,"1.8"),"Compartir"),
-      el("button",{className:"tool",onClick:()=>openAisleSheet(vm)},svg(ICON.sort,"1.8"),"Pasillos"))));
+        el("output",{text:d.people+(d.people===1?" persona":" personas")}),
+        el("button",{className:"plus",text:"+","aria-label":"Una persona más",disabled:d.people>=12,onClick:()=>vm.changePeople(1)}))),
+    el("div",{className:"prow"},
+      el("span",{text:"Ocultar básicos de despensa"}),
+      switchBtn("Ocultar básicos de despensa",d.hideBasics,()=>vm.toggleHideBasics())),
+    el("button",{className:"pdone",text:"Compra hecha",onClick:()=>openCloseSheet(vm)})));
+
+  /* filtro por pasillo */
+  if(d.filters.length>2){
+    host.append(el("div",{className:"afilter",role:"group","aria-label":"Filtrar por pasillo"},d.filters.map(f=>
+      el("button",{"aria-pressed":f.selected?"true":"false",onClick:()=>vm.setAisle(f.id)},
+        f.label.replace(" y verdura",""), el("span",{text:String(f.count)})))));
+  }
 
   if(d.empty) host.append(el("div",{className:"empty",text:d.empty}));
 
   const row=r=>el("div",{className:"row"+(r.checked?" done":"")},
     el("button",{className:"tick","aria-pressed":r.checked?"true":"false",
-      "aria-label":(r.checked?"Desmarcar ":"Marcar ")+r.name,onClick:()=>vm.toggleChecked(r.key)},svg(ICON.check,"3")),
-    el("button",{className:"row-main","aria-label":"Ver de qué comidas viene "+r.name,onClick:()=>openIngredientSheet(vm,r.key)},
+      "aria-label":(r.checked?"Desmarcar ":"Marcar ")+r.name,onClick:()=>vm.toggleChecked(r.key)},
+      el("i",null,svg(ICON.check,"3"))),
+    el("button",{className:"row-main","aria-label":r.name+(r.qty?", "+r.qty:"")+". Ver de qué comidas viene",onClick:()=>openIngredientSheet(vm,r.key)},
       el("span",{className:"row-text"},
         el("span",{className:"row-name",text:r.name}),
         r.hint ? el("span",{className:"row-hint",text:r.hint}) : null),
-      el("span",{className:"row-tags"},
-        r.tag ? el("span",{className:"tag "+({"tuyo":"mine","opcional":"opt","básico":"basic"})[r.tag],text:r.tag}) : null),
-      el("span",{className:"row-qty",text:r.qty}),
-      el("span",{className:"row-chev"},svg(ICON.right,"2.2"))));
+      r.tag ? el("span",{className:"tag "+({"tuyo":"mine","opcional":"opt","básico":"basic"})[r.tag],text:r.tag}) : null,
+      r.qty ? el("span",{className:"row-qty",text:r.qty}) : null));
 
-  const section=(title,count,rows,extraClass)=>el("section",{className:"sec"+(extraClass||"")},
-    el("div",{className:"sec-head"},
-      el("span",{className:"sec-title",text:title}),
-      el("span",{className:"sec-rule"}),
-      el("span",{className:"sec-count",text:count})),
-    el("div",{className:"rows"},rows.map(row)));
+  const section=(title,count,rows,extra)=>el("section",{className:"sec"+(extra||"")},
+    el("div",{className:"sec-head"},el("h2",{text:title}),el("span",{text:count})),
+    rows.map(row));
 
-  d.sections.forEach(s=>host.append(section(s.label, s.done+"/"+s.rows.length, s.rows)));
-  if(d.optionals.length) host.append(section("Opcionales","fuera del total",d.optionals," optionals"));
+  d.visibleSections.forEach(s=>host.append(section(s.label, s.done+" de "+s.rows.length, s.rows)));
+  if(d.showOptionals && d.optionals.length) host.append(section("Opcionales","fuera del total",d.optionals," optionals"));
 
-  /* añadir algo que no viene del menú */
-  const name=el("input",{className:"field",type:"text",placeholder:"Por ejemplo: papel de cocina"});
-  const qty=el("input",{className:"field",type:"number",min:"0",step:"any",inputmode:"decimal",placeholder:"Cant."});
-  const unit=el("input",{className:"field",type:"text",placeholder:"g, ml, ud"});
-  const add=el("button",{className:"btn",text:"Añadir",onClick:()=>{
-    const n=name.value.trim();
-    if(!n){ name.focus(); return; }
-    const undo=vm.addCustom(n, qty.value.trim() ? parseFloat(qty.value) : null, unit.value.trim());
+  /* añadir algo que no viene del menú: fijo abajo, al alcance del pulgar */
+  const input=el("input",{type:"text",placeholder:"Añadir algo a la lista…","aria-label":"Añadir a la lista",enterkeyhint:"done"});
+  const add=()=>{
+    const n=input.value.trim();
+    if(!n){ input.focus(); return; }
+    const undo=vm.addCustom(n,null,"");
     showUndo(n.charAt(0).toUpperCase()+n.slice(1)+" añadido a la lista", undo);
-  }});
-  host.append(el("div",{className:"addbox"},
-    el("h3",{text:"Añadir a la lista"}), name, el("div",{className:"addrow"},qty,unit,add)));
+  };
+  input.addEventListener("keydown",e=>{ if(e.key==="Enter") add(); });
+  host.append(el("div",{className:"addbar"},el("div",{className:"addbar-in"},
+    input, el("button",{"aria-label":"Añadir",onClick:add},svg(ICON.plus,"2.4")))));
 }

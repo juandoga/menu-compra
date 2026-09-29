@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Menuse</title>
 <meta name="description" content="Qué comer cada día y la compra de la semana">
-<meta name="theme-color" content="#1F4D3D">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121110" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Menuse">
@@ -15,41 +16,26 @@
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Petrona:wght@400;500;600;700&family=Archivo:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&display=swap">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="brandrow">
-      <svg class="mark" viewBox="0 0 64 64" aria-hidden="true">
-        <rect width="64" height="64" rx="15" fill="var(--brand)"/>
-        <rect x="8.6" y="30" width="9.4" height="5.6" rx="2.8" fill="var(--brand-on)"/>
-        <rect x="46" y="30" width="9.4" height="5.6" rx="2.8" fill="var(--brand-on)"/>
-        <circle cx="32" cy="18.2" r="3.3" fill="var(--brand-on)"/>
-        <rect x="13.5" y="21.5" width="37" height="5.2" rx="2.6" fill="var(--brand-on)"/>
-        <path d="M16 28.6h32l-2.4 16a3 3 0 0 1-3 2.6H21.4a3 3 0 0 1-3-2.6z" fill="var(--brand-on)"/>
+    <div class="wordmark" aria-label="Menuse">menuse<span>.</span></div>
+    <!-- qué semana estás mirando; al tocarlo se elige otra -->
+    <button class="weekpill" id="weekPill" aria-label="Elegir semana"></button>
+    <button class="hbtn" id="dataBtn" aria-label="Copia de seguridad">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
       </svg>
-      <div class="brandtext">
-        <h1 class="wordmark">Menuse</h1>
-        <p class="tagline" id="tagline">Menú de 4 semanas</p>
-      </div>
-      <button class="hbtn" id="dataBtn" aria-label="Copia de seguridad">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
-        </svg>
-      </button>
-      <button class="hbtn" id="themeBtn" aria-label="Cambiar tema">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-          <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
-        </svg>
-      </button>
-    </div>
-    <div class="weeks">
-      <span class="weeks-label">Semana</span>
-      <div class="seg" id="weekSeg" role="group" aria-label="Elegir semana"></div>
-    </div>
+    </button>
+    <button class="hbtn" id="themeBtn" aria-label="Cambiar tema">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
+      </svg>
+    </button>
   </div>
 </header>
 
@@ -59,22 +45,23 @@
   <section class="view" id="viewShop" hidden></section>
 </main>
 
+<!-- barra de pestañas flotante, abajo, al alcance del pulgar -->
 <nav class="tabbar" role="tablist" aria-label="Secciones">
   <div class="tabbar-in">
     <button class="tab" id="tabHoy" role="tab" aria-selected="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
         <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 1.8"/>
       </svg>
       Hoy
     </button>
     <button class="tab" id="tabSemana" role="tab" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
-        <rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <rect x="3.5" y="4.5" width="17" height="16" rx="3"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/>
       </svg>
       Semana
     </button>
     <button class="tab" id="tabShop" role="tab" aria-selected="false">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M8 9a4 4 0 0 1 8 0"/><path d="M3.8 9h16.4l-2 10.2a2 2 0 0 1-2 1.6H7.8a2 2 0 0 1-2-1.6z"/>
       </svg>
       Compra

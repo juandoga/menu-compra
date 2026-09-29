@@ -60,3 +60,15 @@ export function openSwapSheet(vm,dayIdx){
     }
   });
 }
+
+/* --- elegir qué semana mirar (desde la pastilla de la cabecera) --- */
+export function openWeekPicker(vm){
+  openSheet(host=>{
+    sheetHeader(host,"¿Qué semana quieres ver?", vm.curWeek!=null ? "Esta semana toca la "+(vm.curWeek+1) : "Aún no me has dicho qué semana toca");
+    host.append(block("Ver la semana",
+      pick4(vm.week,w=>{ vm.selectWeek(w); closeSheet(); })));
+    host.append(el("div",{className:"sheet-actions"},
+      el("button",{className:"btn ghost full",text: vm.curWeek!=null ? "Cambiar la semana en curso" : "Decir qué semana toca",
+        onClick:()=>openWeekSheet(vm)})));
+  });
+}

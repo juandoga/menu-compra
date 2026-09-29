@@ -8,6 +8,7 @@ import { renderHoy } from "./view/hoyView.js";
 import { renderSemana } from "./view/semanaView.js";
 import { renderCompra } from "./view/compraView.js";
 import { openDataSheet } from "./view/sheets/dataSheet.js";
+import { openWeekPicker } from "./view/sheets/weekSheets.js";
 
 const vm=createAppViewModel();
 
@@ -21,16 +22,18 @@ const views={
 /* ---------- pintar ---------- */
 let lastView=null;
 function render(){
-  /* botones de semana */
-  const seg=$("weekSeg");
-  seg.textContent="";
+  /* pastilla de la cabecera: qué semana miras (barra roja) y cuál toca (barra gris) */
+  const pill=$("weekPill");
+  pill.textContent="";
+  const bars=el("span",{className:"bars","aria-hidden":"true"});
   vm.weekButtons().forEach(b=>{
-    const btn=el("button",{text:String(b.n),"aria-pressed":b.selected?"true":"false",
-      "aria-label":"Semana "+b.n+(b.now?" (la de esta semana)":""),onClick:()=>vm.selectWeek(b.w)});
-    if(b.now) btn.classList.add("now");
-    seg.append(btn);
+    const i=el("i");
+    if(b.selected) i.classList.add("on");
+    if(b.now) i.classList.add("now");
+    bars.append(i);
   });
-  $("tagline").textContent=vm.tagline();
+  pill.append(el("span",{text:"Semana "+(vm.week+1)}),bars);
+  pill.setAttribute("aria-label","Semana "+(vm.week+1)+(vm.week===vm.curWeek?", la de esta semana":"")+". Elegir otra");
   $("dataBtn").classList.toggle("nudge", !!vm.backupReminder());
 
   /* pestaña activa */
@@ -47,6 +50,7 @@ vm.subscribe(render);
 /* ---------- carcasa ---------- */
 for(const k in views) views[k].tab.addEventListener("click",()=>vm.setView(k));
 $("dataBtn").addEventListener("click",()=>openDataSheet(vm));
+$("weekPill").addEventListener("click",()=>openWeekPicker(vm));
 
 /* tema claro / oscuro */
 const saved=vm.theme();

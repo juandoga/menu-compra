@@ -13,6 +13,15 @@ import { cap, clone, fmt, norm, parseItem, qtyText } from "../model/text.js";
 import { cycleWeekOn, isoDate, startFor, weekdayIndex } from "../model/calendar.js";
 
 const DAY_MS=864e5;
+const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const MONTHS_SHORT=["ene","feb","mar","abr","may","jun","jul","ago","sept","oct","nov","dic"];
+/* qué tipo de comida es, para darle su color: comida, cena o libre */
+function mealKind(meal){
+  const k=norm(meal.id||meal.name);
+  if(k.indexOf("cena")===0) return "cena";
+  if(k.indexOf("comida")===0) return "comida";
+  return "libre";
+}
 
 /* now: de dónde sale la hora. Se puede cambiar en las pruebas para simular otro día. */
 export function createAppViewModel(now=()=>new Date()){
@@ -26,7 +35,8 @@ export function createAppViewModel(now=()=>new Date()){
     view:"hoy",
     shopAutoWeek:false,  /* la compra saltó sola a la semana siguiente (fin de semana) */
     shopDeclined:null,   /* día en que dijiste «ver la de esta» */
-    openDays:new Set()
+    openDays:new Set(),
+    aisle:"all"          /* filtro de pasillo en la lista de la compra */
   };
   st.week = st.curWeek==null ? 0 : st.curWeek;
   st.openDays.add(st.todayIdx);
@@ -48,6 +58,9 @@ export function createAppViewModel(now=()=>new Date()){
   const dishAt=ref=>menu()[st.week][ref.d].meals[ref.mi].dishes[ref.si];
   /* cambia la semana de lo marcado en la lista y lo guarda */
   function editWeekState(w,fn){ const s=repo.weekState(w); fn(s); repo.saveWeekState(w,s); }
+  /* el lunes de la semana real en curso */
+  function mondayDate(){ const t=now(); const m=new Date(t.getFullYear(),t.getMonth(),t.getDate()); m.setDate(m.getDate()-st.todayIdx); return m; }
+  function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
 
   /* ---------- copia de seguridad: ¿toca recordarla? ---------- */
   function backupDue(){
@@ -63,6 +76,7 @@ export function createAppViewModel(now=()=>new Date()){
   function mealVM(ref,shownDay){
     return {
       name:ref.meal.name,
+      kind:mealKind(ref.meal),
       swappedFrom: ref.d!==shownDay ? dayName(ref.d).toLowerCase() : null,
       ref:{d:ref.d, mi:ref.mi},
       dishes:ref.meal.dishes.map((dish,si)=>dishVM(dish,{d:ref.d,mi:ref.mi,si},shownDay))
@@ -119,18 +133,33 @@ export function createAppViewModel(now=()=>new Date()){
         weekend: st.todayIdx>=5,
         warnings,
         meals: vw[st.todayIdx].map(r=>mealVM(r,st.todayIdx)),
-        canChangeWeek: st.curWeek!=null
+        canChangeWeek: st.curWeek!=null,
+        dayName: dayName(st.todayIdx),
+        dateLabel: now().getDate()+" de "+MONTHS[now().getMonth()],
+        /* tira con los 7 días de esta semana: los pasados apagados, hoy destacado */
+        strip: DAYS.map((d,i)=>({idx:i, ini:d.ini, name:d.full, date:addDays(mondayDate(),i).getDate(),
+          isToday:i===st.todayIdx, past:i<st.todayIdx, weekend:i>=5}))
       };
     },
 
     /* pestaña Semana */
     semana(){
+      const isCurrent = st.curWeek!=null && st.week===st.curWeek;
       return vweek(st.week).map((refs,d)=>({
         idx:d, name:dayName(d), ini:DAYS[d].ini,
-        isToday:d===st.todayIdx, weekend:d>=5, open:st.openDays.has(d),
-        summary:refs.map(r=>({meal:r.meal.name, text:r.meal.dishes.length ? r.meal.dishes.map(x=>x.name).join(", ") : "—"})),
-        meals:refs.map(r=>mealVM(r,d))
+        date: isCurrent ? addDays(mondayDate(),d).getDate() : null,
+        isToday:d===st.todayIdx && (isCurrent || st.curWeek==null), past:isCurrent && d<st.todayIdx,
+        weekend:d>=5, open:st.openDays.has(d),
+        summary:refs.map(r=>({meal:r.meal.name, kind:mealKind(r.meal), text:r.meal.dishes.length ? r.meal.dishes.map(x=>x.name).join(" · ") : "—"})),
+        meals:refs.map(r=>mealVM(r,d)),
+        hasPrep:refs.some(r=>r.meal.dishes.some(x=>x.prep && String(x.prep).trim()))
       }));
+    },
+    /* «28 sept – 4 oct» si miras la semana en curso */
+    weekRange(){
+      if(st.curWeek==null || st.week!==st.curWeek) return null;
+      const a=mondayDate(), b=addDays(a,6);
+      return a.getDate()+" "+MONTHS_SHORT[a.getMonth()]+" – "+b.getDate()+" "+MONTHS_SHORT[b.getMonth()];
     },
 
     /* pestaña Compra */
@@ -150,7 +179,12 @@ export function createAppViewModel(now=()=>new Date()){
         const its=main.filter(i=>sectionFor(i.item)===id);
         return {id, label:sectionLabel(id), done:its.filter(i=>s.checked[i.key]).length, rows:its.map(row)};
       }).filter(x=>x.rows.length);
+      const aisle = sections.some(x=>x.id===st.aisle) ? st.aisle : "all";
       return {
+        filters:[{id:"all", label:"Todo", count:main.length, selected:aisle==="all"}]
+          .concat(sections.map(x=>({id:x.id, label:x.label, count:x.done+"/"+x.rows.length, selected:aisle===x.id}))),
+        visibleSections: aisle==="all" ? sections : sections.filter(x=>x.id===aisle),
+        showOptionals: aisle==="all",
         autoWeek: st.shopAutoWeek ? st.week+1 : null,
         done, total:main.length, pct: main.length ? Math.round(done/main.length*100) : 0,
         hideBasics:hide,
@@ -275,6 +309,8 @@ export function createAppViewModel(now=()=>new Date()){
 
     toggleDay(d){ if(st.openDays.has(d)) st.openDays.delete(d); else st.openDays.add(d); }, /* sin repintar: la View anima */
     openDay(d){ st.openDays.add(d); },
+    /* desde la tira de días de Hoy: ir a ese día en Semana */
+    goToDay(d){ st.openDays.add(d); if(st.curWeek!=null) st.week=st.curWeek; this.setView("semana"); },
 
     /* «esta semana toca la w» */
     setCurrentWeek(w){
@@ -310,6 +346,7 @@ export function createAppViewModel(now=()=>new Date()){
 
     /* --- lista de la compra --- */
     toggleChecked(key){ editWeekState(st.week,s=>{ s.checked[key]=!s.checked[key]; }); notify(); },
+    setAisle(id){ st.aisle=id; notify(); },
     toggleHideBasics(){ repo.setHideBasics(!repo.hideBasics()); notify(); },
     changePeople(delta){
       const n=Math.min(12,Math.max(1,people()+delta));

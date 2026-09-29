@@ -15,7 +15,8 @@ export function el(tag,props,...children){
       else e.setAttribute(k,v);
     }
   }
-  children.flat().forEach(c=>{ if(c!=null && c!==false) e.append(c); });
+  /* flat(Infinity): acepta listas dentro de listas (p. ej. block("…", filas.map(…))) */
+  children.flat(Infinity).forEach(c=>{ if(c!=null && c!==false) e.append(c); });
   return e;
 }
 
@@ -43,7 +44,12 @@ export const ICON={
   down:'<path d="m6 9 6 6 6-6"/>',
   share:'<path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M12 15V3"/><path d="m8 7 4-4 4 4"/>',
   sort:'<path d="M7 4v16M7 4 4 7M7 4l3 3"/><path d="M17 20V4M17 20l-3-3M17 20l3-3"/>',
-  off:'<path d="M3 3l18 18"/><path d="M8.5 15.5a5 5 0 0 1 7 0"/><path d="M5 12a10 10 0 0 1 3-2"/><path d="M19 12a10 10 0 0 0-6-2.8"/><path d="M12 19h.01"/>'
+  off:'<path d="M3 3l18 18"/><path d="M8.5 15.5a5 5 0 0 1 7 0"/><path d="M5 12a10 10 0 0 1 3-2"/><path d="M19 12a10 10 0 0 0-6-2.8"/><path d="M12 19h.01"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon:'<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>',
+  star:'<path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>',
+  swap:'<path d="M7 4 3 8l4 4"/><path d="M3 8h13a4 4 0 0 1 4 4"/><path d="m17 20 4-4-4-4"/><path d="M21 16H8a4 4 0 0 1-4-4"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>'
 };
 
 export function linkBtn(text,fn){ return el("button",{className:"linkbtn",text,onClick:fn}); }
