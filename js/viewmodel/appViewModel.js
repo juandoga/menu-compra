@@ -10,7 +10,7 @@ import * as rules from "../model/rules.js";
 import { DAYS } from "../model/defaultMenu.js";
 import { sectionFor, sectionLabel } from "../model/sections.js";
 import { cap, clone, fmt, norm, parseItem, qtyText, itemKey } from "../model/text.js";
-import { cycleWeekOn, isoDate, startFor, weekdayIndex } from "../model/calendar.js";
+import { cycleWeekOn, isoDate, startFor, weekdayIndex, SEASONS, seasonOf, seasonLabel } from "../model/calendar.js";
 
 const DAY_MS=864e5;
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
@@ -31,7 +31,8 @@ export function createAppViewModel(now=()=>new Date()){
     shopDeclined:null,   /* día en que dijiste «ver la de esta» */
     openDays:new Set(),
     aisle:"all",         /* filtro de pasillo en la lista de la compra */
-    includePast:false    /* incluir en la compra los días de esta semana que ya han pasado */
+    includePast:false,   /* incluir en la compra los días de esta semana que ya han pasado */
+    seasonView:null      /* estación cuyo menú estás mirando para editarlo (null = la que toca) */
   };
   st.week = st.curWeek==null ? 0 : st.curWeek;
   st.openDays.add(st.todayIdx);
@@ -39,11 +40,25 @@ export function createAppViewModel(now=()=>new Date()){
   /* ---------- avisar de cambios ---------- */
   const listeners=new Set();
   function subscribe(fn){ listeners.add(fn); return ()=>listeners.delete(fn); }
-  function notify(){ listeners.forEach(fn=>fn()); }
+  function notify(){ sync(); listeners.forEach(fn=>fn()); }
+
+  /* ---------- estaciones: qué menú se usa ---------- */
+  /* la estación que toca: la de la fecha, o la que hayas fijado en Ajustes */
+  function seasonNow(){ const s=repo.seasonSetting(); return s==="auto" ? seasonOf(now()) : s; }
+  /* el menú de la estación que toca, o el general si esa estación no tiene menú propio */
+  function liveMenuId(){ const s=seasonNow(); return repo.hasSeasonMenu(s) ? s : "base"; }
+  /* el menú que se está mirando (puede ser otra estación, para editarla) */
+  function viewMenuId(){ const s=st.seasonView||seasonNow(); return repo.hasSeasonMenu(s) ? s : "base"; }
+  function sync(){ repo.useMenu(viewMenuId()); }
+  sync();
 
   /* ---------- atajos internos ---------- */
   const menu=()=>repo.getMenu();
-  const swapsFor=w=>{ const s=repo.loadSwaps(now()); return (s && s.week===w) ? s.list : []; };
+  /* los cambios de día sólo valen para el menú que toca de verdad, no al mirar otra estación */
+  const swapsFor=w=>{
+    if(viewMenuId()!==liveMenuId()) return [];
+    const s=repo.loadSwaps(now()); return (s && s.week===w) ? s.list : [];
+  };
   const vweek=w=>rules.viewWeek(menu(),w,swapsFor(w));
   const people=()=>rules.peopleCount(repo.peopleSetting());
   const basicOv=()=>repo.basicsOverrides();
@@ -134,6 +149,7 @@ export function createAppViewModel(now=()=>new Date()){
         meals: vw[st.todayIdx].map(r=>mealVM(r,st.todayIdx)),
         canChangeWeek: st.curWeek!=null,
         dayName: dayName(st.todayIdx),
+        menuName: viewMenuId()==="base" ? null : seasonLabel(viewMenuId()).toLowerCase(),
         dateLabel: now().getDate()+" de "+MONTHS[now().getMonth()],
         /* tira con los 7 días de esta semana: los pasados apagados, hoy destacado */
         strip: DAYS.map((d,i)=>({idx:i, ini:d.ini, name:d.full, date:addDays(mondayDate(),i).getDate(),
@@ -301,12 +317,47 @@ export function createAppViewModel(now=()=>new Date()){
     },
 
     backupJSON(){ return JSON.stringify(repo.exportData(),null,2); },
+
+    /* panel de ajustes: estaciones */
+    seasonInfo(){
+      const setting=repo.seasonSetting(), cur=seasonNow(), live=liveMenuId();
+      return {
+        setting, auto:seasonOf(now()), autoLabel:seasonLabel(seasonOf(now())),
+        nowLabel:seasonLabel(cur), usingBase: live==="base",
+        seasons:SEASONS.map(s=>({...s, hasMenu:repo.hasSeasonMenu(s.id), isNow:s.id===cur, inUse:s.id===live}))
+      };
+    },
+    /* aviso «estás viendo el menú de verano» */
+    seasonBanner(){
+      if(!st.seasonView || st.seasonView===seasonNow()) return null;
+      return {label:seasonLabel(st.seasonView)};
+    },
     theme(){ return repo.theme(); },
 
     /* ================= ÓRDENES (COMANDOS) =================
        Las que se pueden deshacer devuelven una función que lo deshace. */
 
     selectWeek(w){ st.week=w; st.shopAutoWeek=false; notify(); },
+
+    /* --- estaciones --- */
+    setSeasonSetting(v){ repo.setSeasonSetting(v); st.seasonView=null; notify(); },
+    createSeasonMenu(s,mode){
+      repo.createSeasonMenu(s,mode); notify();
+      return ()=>{ repo.deleteSeasonMenu(s); if(st.seasonView===s) st.seasonView=null; notify(); };
+    },
+    deleteSeasonMenu(s){
+      const raw=repo.deleteSeasonMenu(s);
+      if(st.seasonView===s) st.seasonView=null;
+      notify();
+      return ()=>{ repo.restoreSeasonMenu(s,raw); notify(); };
+    },
+    /* abrir el menú de otra estación para verlo o editarlo */
+    viewSeason(s){
+      st.seasonView = s===seasonNow() ? null : s;
+      st.shopAutoWeek=false; st.week = st.curWeek==null ? 0 : st.curWeek;
+      this.setView("semana");
+    },
+    stopViewingSeason(){ st.seasonView=null; st.week = st.curWeek==null ? 0 : st.curWeek; notify(); },
 
     setView(v){
       st.view=v;

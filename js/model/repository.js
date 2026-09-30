@@ -10,6 +10,11 @@ import { clone, itemKey, norm, parseItem } from "./text.js";
 import { isoDate, mondayOf } from "./calendar.js";
 
 /* ---------- menú de 4 semanas ---------- */
+/* Hay un menú general («base», el de siempre) y, si los creas, uno propio por estación.
+   CUR dice cuál se está usando ahora; el ViewModel lo elige con useMenu(). */
+let CUR="base";
+const menuKey=id=>id==="base" ? KEYS.menu : KEYS.seasonMenu+id;
+const weekKey=w=>CUR==="base" ? KEYS.week+w : KEYS.week+CUR+"_"+w;
 
 /* Menús guardados con versiones antiguas de la app: se pasan al formato actual (comida / cena).
    Los desayunos por día (sólo existieron el 30/9/2026) se quitan: ahora son recordatorios en la
@@ -33,10 +38,10 @@ function migrate(menu){
     return day;
   }));
 }
-function loadMenu(){
+function loadMenu(id=CUR){
   let m;
   try{
-    const raw=store.get(KEYS.menu);
+    const raw=store.get(menuKey(id));
     m=migrate(raw ? JSON.parse(raw) : clone(DEFAULT_MENU));
   }catch(e){ m=migrate(clone(DEFAULT_MENU)); }
   if(!Array.isArray(m) || m.length!==4) m=migrate(clone(DEFAULT_MENU));
@@ -61,17 +66,47 @@ function seedBreakfast(){
 
 /* El menú se devuelve «vivo»: quien lo cambie debe llamar luego a saveMenu() */
 export function getMenu(){ return MENU; }
-export function saveMenu(){ store.setJSON(KEYS.menu, MENU); }
-export function menuSnapshot(){ return store.get(KEYS.menu); }
+export function saveMenu(){ store.setJSON(menuKey(CUR), MENU); }
+export function menuSnapshot(){ return store.get(menuKey(CUR)); }
 export function resetMenu(){ MENU=migrate(clone(DEFAULT_MENU)); saveMenu(); }
 export function restoreMenuSnapshot(raw){
-  if(raw!=null) store.set(KEYS.menu,raw);
+  if(raw!=null) store.set(menuKey(CUR),raw);
   MENU=loadMenu();
 }
 
+/* ---------- menús por estación ---------- */
+export function activeMenuId(){ return CUR; }
+/* cambia el menú en uso («base» o una estación que tenga menú propio) */
+export function useMenu(id){
+  if(id!=="base" && !hasSeasonMenu(id)) id="base";
+  if(id===CUR) return;
+  CUR=id; MENU=loadMenu(id);
+}
+export function hasSeasonMenu(s){ return store.get(menuKey(s))!=null; }
+/* un menú vacío: 4 semanas × 7 días, con comida y cena sin platos */
+function emptyMenu(){
+  return [0,1,2,3].map(()=>Array.from({length:7},()=>({meals:[
+    {id:"comida",name:"Comida",dishes:[]},{id:"cena",name:"Cena",dishes:[]}]})));
+}
+/* crea el menú de una estación copiando el general o vacío */
+export function createSeasonMenu(s,mode){
+  const data = mode==="copy" ? (CUR==="base" ? clone(MENU) : loadMenu("base")) : emptyMenu();
+  store.setJSON(menuKey(s),data);
+}
+/* borra el menú de una estación; devuelve lo borrado para poder deshacer */
+export function deleteSeasonMenu(s){
+  const raw=store.get(menuKey(s));
+  store.remove(menuKey(s));
+  if(CUR===s){ CUR="base"; MENU=loadMenu("base"); }
+  return raw;
+}
+export function restoreSeasonMenu(s,raw){ if(raw!=null) store.set(menuKey(s),raw); }
+export function seasonSetting(){ return store.get(KEYS.season) || "auto"; }
+export function setSeasonSetting(v){ store.set(KEYS.season,v); }
+
 /* ---------- lo marcado en la lista de cada semana ---------- */
 export function weekState(w){
-  const s=store.getJSON(KEYS.week+w,null);
+  const s=store.getJSON(weekKey(w),null);
   if(!s) return {checked:{},overrides:{},removed:[],custom:[]};
   /* lo guardado antes de agrupar por singular («patatas») pasa a la clave nueva («patata») */
   const fix=k=>(/^(custom|fijo)::/.test(k) ? k : itemKey(k));
@@ -80,7 +115,7 @@ export function weekState(w){
   s.removed=[...new Set((s.removed||[]).map(fix))];
   return s;
 }
-export function saveWeekState(w,s){ store.setJSON(KEYS.week+w, s); }
+export function saveWeekState(w,s){ store.setJSON(weekKey(w), s); }
 
 /* ---------- básicos de despensa (lo que casi siempre hay en casa) ---------- */
 export function basicsOverrides(){ return store.getJSON(KEYS.basics,{}) || {}; }
@@ -143,7 +178,7 @@ export function hasOwnData(){
 export function exportData(){
   const out={app:"menuse",version:1,exported:new Date().toISOString(),data:{}};
   BACKUP_KEYS.forEach(k=>{ const v=store.get(k); if(v!=null) out.data[k]=v; });
-  if(out.data[KEYS.menu]==null) out.data[KEYS.menu]=JSON.stringify(MENU);
+  if(out.data[KEYS.menu]==null) out.data[KEYS.menu]=JSON.stringify(loadMenu("base"));
   return out;
 }
 /* Devuelve null si ha ido bien, o el motivo si no */
@@ -152,6 +187,6 @@ export function importData(text){
   try{ obj=JSON.parse(text); }catch(e){ return "Ese texto no es una copia válida de Menuse."; }
   if(!obj || (obj.app!=="menuse" && obj.app!=="vianda") || !obj.data) return "Ese archivo no es una copia de Menuse.";
   Object.keys(obj.data).forEach(k=>{ if(BACKUP_KEYS.indexOf(k)>=0) store.set(k,obj.data[k]); });
-  MENU=loadMenu();
+  CUR="base"; MENU=loadMenu("base");
   return null;
 }

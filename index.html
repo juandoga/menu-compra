@@ -26,20 +26,18 @@
     <div class="wordmark" aria-label="Menuse">menuse<span>.</span></div>
     <!-- qué semana estás mirando; al tocarlo se elige otra -->
     <button class="weekpill" id="weekPill" aria-label="Elegir semana"></button>
-    <button class="hbtn" id="dataBtn" aria-label="Copia de seguridad">
+    <!-- ajustes: estaciones, tema y copia de seguridad -->
+    <button class="hbtn" id="settingsBtn" aria-label="Ajustes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 3v12"/><path d="m7.5 10.5 4.5 4.5 4.5-4.5"/><path d="M4 17v2.5a1.5 1.5 0 0 0 1.5 1.5h13a1.5 1.5 0 0 0 1.5-1.5V17"/>
-      </svg>
-    </button>
-    <button class="hbtn" id="themeBtn" aria-label="Cambiar tema">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
+        <path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>
       </svg>
     </button>
   </div>
 </header>
 
 <main class="shell">
+  <!-- aviso fijo cuando miras el menú de otra estación -->
+  <div id="banner"></div>
   <section class="view" id="viewHoy"></section>
   <section class="view" id="viewSemana" hidden></section>
   <section class="view" id="viewShop" hidden></section>

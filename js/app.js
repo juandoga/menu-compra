@@ -3,11 +3,11 @@
    y engancha lo que es de la «carcasa» de la app: pestañas, semanas, tema y modo sin conexión. */
 
 import { createAppViewModel } from "./viewmodel/appViewModel.js";
-import { el, showSnack } from "./view/dom.js";
+import { el, showSnack, applyTheme, linkBtn } from "./view/dom.js";
 import { renderHoy } from "./view/hoyView.js";
 import { renderSemana } from "./view/semanaView.js";
 import { renderCompra } from "./view/compraView.js";
-import { openDataSheet } from "./view/sheets/dataSheet.js";
+import { openSettingsSheet } from "./view/sheets/settingsSheet.js";
 import { openWeekPicker } from "./view/sheets/weekSheets.js";
 
 const vm=createAppViewModel();
@@ -34,7 +34,14 @@ function render(){
   });
   pill.append(el("span",{text:"Semana "+(vm.week+1)}),bars);
   pill.setAttribute("aria-label","Semana "+(vm.week+1)+(vm.week===vm.curWeek?", la de esta semana":"")+". Elegir otra");
-  $("dataBtn").classList.toggle("nudge", !!vm.backupReminder());
+  $("settingsBtn").classList.toggle("nudge", !!vm.backupReminder());
+
+  /* aviso al mirar el menú de otra estación */
+  const banner=$("banner"), sb=vm.seasonBanner();
+  banner.textContent="";
+  if(sb) banner.append(el("div",{className:"note seasonnote"},
+    el("span",null,"Estás viendo el menú de ",el("b",{text:sb.label.toLowerCase()}),"."),
+    linkBtn("Volver",()=>vm.stopViewingSeason())));
 
   /* pestaña activa */
   for(const k in views){
@@ -49,19 +56,11 @@ vm.subscribe(render);
 
 /* ---------- carcasa ---------- */
 for(const k in views) views[k].tab.addEventListener("click",()=>vm.setView(k));
-$("dataBtn").addEventListener("click",()=>openDataSheet(vm));
+$("settingsBtn").addEventListener("click",()=>openSettingsSheet(vm));
 $("weekPill").addEventListener("click",()=>openWeekPicker(vm));
 
-/* tema claro / oscuro */
-const saved=vm.theme();
-if(saved==="dark"||saved==="light") document.documentElement.setAttribute("data-theme",saved);
-$("themeBtn").addEventListener("click",()=>{
-  const cur=document.documentElement.getAttribute("data-theme");
-  const isDark = cur ? cur==="dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
-  const next = isDark ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme",next);
-  vm.setTheme(next);
-});
+/* tema claro / oscuro (se cambia en Ajustes) */
+applyTheme(vm.theme());
 
 /* con o sin conexión cambia el aviso de la lista */
 window.addEventListener("online", ()=>{ if(vm.view==="shop") render(); });

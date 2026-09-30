@@ -17,12 +17,17 @@ export const KEYS = {
   snooze:  "menuCompraApp_backupSnooze_v1",/* «recuérdamelo luego» */
   staples: "menuCompraApp_staples_v1",    /* productos fijos: salen todas las semanas */
   hideDone:"menuCompraApp_hideChecked_v1",/* ocultar lo ya comprado en la lista */
-  bfSeeded:"menuCompraApp_breakfastSeeded_v1" /* ya se crearon los recordatorios de desayuno */
+  bfSeeded:"menuCompraApp_breakfastSeeded_v1", /* ya se crearon los recordatorios de desayuno */
+  season:  "menuCompraApp_season_v1",     /* estación: "auto" o fija (primavera, verano…) */
+  seasonMenu:"menuCompraApp_menu_"        /* + estación: el menú propio de esa estación */
 };
+const SEASON_IDS=["primavera","verano","otono","invierno"];
 
 /* Lo que entra en la copia de seguridad */
 export const BACKUP_KEYS = [KEYS.menu,KEYS.basics,KEYS.hide,KEYS.theme,KEYS.aisles,KEYS.start,KEYS.people,KEYS.staples,KEYS.hideDone,
-  KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3"];
+  KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3",KEYS.season]
+  /* menús por estación y lo marcado en cada una de sus semanas */
+  .concat(...SEASON_IDS.map(s=>[KEYS.seasonMenu+s].concat([0,1,2,3].map(w=>KEYS.week+s+"_"+w))));
 
 /* Si el navegador no deja guardar (modo privado…), la app sigue funcionando sin romperse */
 export function get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }

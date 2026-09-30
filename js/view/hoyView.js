@@ -21,7 +21,7 @@ export function renderHoy(host,vm){
 
   host.append(el("div",{className:"hero"},
     el("h1",{text:d.dayName}),
-    el("p",{text:d.dateLabel+(d.askWeek ? "" : " · semana "+(vm.week+1)+" del menú")})));
+    el("p",{text:d.dateLabel+(d.askWeek ? "" : " · semana "+(vm.week+1)+" del menú"+(d.menuName ? " de "+d.menuName : ""))})));
 
   /* primera vez: qué semana toca */
   if(d.askWeek){

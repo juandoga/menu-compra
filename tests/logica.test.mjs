@@ -186,3 +186,47 @@ test("«patatas» y «patata» son el mismo producto en la lista", ()=>{
   assert.equal(p.length,1);
   assert.equal(itemQtyText(p[0]),"3 ud");
 });
+
+/* ---------- menús por estación ---------- */
+test("la estación sale de la fecha", async ()=>{
+  const { seasonOf } = await import("../js/model/calendar.js");
+  assert.equal(seasonOf(new Date(2026,8,22)),"verano");   /* 22 sept */
+  assert.equal(seasonOf(new Date(2026,8,23)),"otono");    /* 23 sept */
+  assert.equal(seasonOf(new Date(2026,11,25)),"invierno");
+  assert.equal(seasonOf(new Date(2027,1,10)),"invierno");
+  assert.equal(seasonOf(new Date(2027,3,1)),"primavera");
+  assert.equal(seasonOf(new Date(2027,6,1)),"verano");
+});
+
+test("ViewModel: sin menú propio se usa el general; con menú propio, el de la estación", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,8,30,12)); /* otoño */
+  vm.setCurrentWeek(0);
+  const general=vm.hoy().meals[0].dishes.map(d=>d.name);
+  assert.ok(general.length>0);
+  assert.equal(vm.hoy().menuName,null);
+  /* menú de otoño vacío: hoy no hay platos */
+  const undo=vm.createSeasonMenu("otono","empty");
+  assert.equal(vm.hoy().menuName,"otoño");
+  assert.equal(vm.hoy().meals[0].dishes.length,0);
+  /* lo que marcas en otoño no toca lo del menú general */
+  undo();
+  assert.deepEqual(vm.hoy().meals[0].dishes.map(d=>d.name),general);
+});
+
+test("ViewModel: editar el menú de verano en otoño no cambia lo de hoy", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,8,30,12));
+  vm.setCurrentWeek(0);
+  const antes=vm.hoy().meals[0].dishes[0].name;
+  vm.createSeasonMenu("verano","copy");
+  vm.viewSeason("verano");
+  assert.equal(vm.seasonBanner().label,"Verano");
+  const ref=vm.semana()[vm.todayIdx].meals[0].dishes[0].ref;
+  vm.renameDish(ref,"Gazpacho");
+  vm.stopViewingSeason();
+  assert.equal(vm.hoy().meals[0].dishes[0].name,antes);   /* otoño sigue con el general */
+  vm.setSeasonSetting("verano");                           /* fijar verano a mano */
+  assert.equal(vm.hoy().meals[0].dishes[0].name,"Gazpacho");
+  vm.setSeasonSetting("auto");
+});

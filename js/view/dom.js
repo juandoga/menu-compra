@@ -150,3 +150,9 @@ export function block(label,...children){
   return el("div",{className:"block"},el("p",{className:"block-label",text:label}),children);
 }
 export function hintLine(text,style){ return el("p",{className:"hintline",text,style}); }
+
+/* tema: "light", "dark" o automático (según el móvil) */
+export function applyTheme(t){
+  if(t==="dark"||t==="light") document.documentElement.setAttribute("data-theme",t);
+  else document.documentElement.removeAttribute("data-theme");
+}

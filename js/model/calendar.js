@@ -27,3 +27,20 @@ export function startFor(date,w){
   m.setDate(m.getDate()-7*w);
   return isoDate(m);
 }
+
+/* ---------- estaciones ---------- */
+/* Fechas de inicio aproximadas (las astronómicas): 21 mar, 21 jun, 23 sep, 21 dic */
+export const SEASONS=[
+  {id:"primavera", label:"Primavera", range:"21 mar – 20 jun"},
+  {id:"verano",    label:"Verano",    range:"21 jun – 22 sep"},
+  {id:"otono",     label:"Otoño",     range:"23 sep – 20 dic"},
+  {id:"invierno",  label:"Invierno",  range:"21 dic – 20 mar"}
+];
+export function seasonOf(date){
+  const md=(date.getMonth()+1)*100+date.getDate(); /* 30 de septiembre → 930 */
+  if(md>=321 && md<621) return "primavera";
+  if(md>=621 && md<923) return "verano";
+  if(md>=923 && md<1221) return "otono";
+  return "invierno";
+}
+export function seasonLabel(id){ const s=SEASONS.find(x=>x.id===id); return s ? s.label : ""; }
