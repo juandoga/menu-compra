@@ -19,6 +19,16 @@ export function viewWeek(menu,w,swaps){
   return v;
 }
 
+/* ---------- tipos de comida ---------- */
+/* comida, cena, desayuno o libre: decide su color y algunas reglas */
+export function mealKind(meal){
+  const k=norm((meal && (meal.id||meal.name))||"");
+  if(k.indexOf("desayuno")===0) return "desayuno";
+  if(k.indexOf("cena")===0) return "cena";
+  if(k.indexOf("comida")===0) return "comida";
+  return "libre";
+}
+
 /* recorre todos los platos de las 4 semanas */
 export function eachDish(menu,fn){
   menu.forEach((wk,wi)=>wk.forEach((day,di)=>day.meals.forEach((meal,mi)=>
@@ -26,10 +36,12 @@ export function eachDish(menu,fn){
 }
 
 /* ---------- básicos de despensa ---------- */
-/* Un producto es «básico» si aparece en 3 o más semanas, salvo que lo hayas cambiado a mano */
+/* Un producto es «básico» si aparece en 3 o más semanas, salvo que lo hayas cambiado a mano.
+   Los desayunos no cuentan: se repiten todos los días y lo volverían todo «básico». */
 function weekCountFor(menu,key){
   const seen=new Set();
   eachDish(menu,(dish,ctx)=>{
+    if(mealKind(ctx.meal)==="desayuno") return;
     dish.ingredients.forEach(i=>{ if(norm(parseItem(i.item).short)===key) seen.add(ctx.wi); });
   });
   return seen.size;
@@ -42,8 +54,10 @@ export function isBasic(menu,overrides,shortName){
 
 /* ---------- lista de la compra ---------- */
 /* Junta los ingredientes de toda la semana. Si un mismo producto viene en unidades
-   distintas, cada unidad suma por separado: «2 ud + 150 g», nada se pierde. */
-export function buildList(menu,w,swaps){
+   distintas, cada unidad suma por separado: «2 ud + 150 g», nada se pierde.
+   fromDay: sólo cuenta desde ese día (0 = lunes). Sirve para no comprar lo de los días
+   de esta semana que ya han pasado. */
+export function buildList(menu,w,swaps,fromDay=0){
   const map=new Map();
   /* Se suma siempre en el orden del menú original, para que el resultado no cambie al
      intercambiar días; sólo el «qué día» de cada origen sigue los cambios. */
@@ -52,6 +66,7 @@ export function buildList(menu,w,swaps){
   menu[w].forEach((day,d)=>{
     day.meals.forEach((meal,mi)=>{
       const dayIdx = shownDay[d][mi]==null ? d : shownDay[d][mi];
+      if(dayIdx<fromDay) return; /* día ya pasado */
       meal.dishes.forEach(dish=>{
         dish.ingredients.forEach(i=>{
           const p=parseItem(i.item);
@@ -98,10 +113,11 @@ export function scaleQty(q,u,f){
 }
 
 /* La lista final de una semana: lo del menú (menos lo quitado, con tus cantidades
-   y ajustado a las personas) + lo que añadiste tú */
-export function shopItems(menu,w,state,people,swaps){
+   y ajustado a las personas) + lo que añadiste tú esta semana + tus productos fijos.
+   opts.fromDay: días ya pasados que no se cuentan. opts.staples: productos fijos. */
+export function shopItems(menu,w,state,people,swaps,opts={}){
   const f=people/BASE_PEOPLE;
-  const base=buildList(menu,w,swaps).filter(i=>!state.removed.includes(i.key));
+  const base=buildList(menu,w,swaps,opts.fromDay||0).filter(i=>!state.removed.includes(i.key));
   base.forEach(i=>{
     if(Object.prototype.hasOwnProperty.call(state.overrides,i.key)){
       i.qty=state.overrides[i.key]; i.extra=[]; i.overridden=true; /* la cantidad que pusiste tú manda */
@@ -111,7 +127,10 @@ export function shopItems(menu,w,state,people,swaps){
     }
   });
   const custom=(state.custom||[]).map(c=>({...c,custom:true,allOptional:false,hint:null,origins:[],extra:[]}));
-  return base.concat(custom);
+  /* fijos: salen todas las semanas, salvo que digas «esta semana no» (queda en removed) */
+  const staples=(opts.staples||[]).filter(x=>!state.removed.includes(x.key))
+    .map(x=>({...x,custom:true,staple:true,allOptional:false,hint:null,origins:[],extra:[]}));
+  return base.concat(custom,staples);
 }
 
 /* texto de la cantidad total de un producto de la lista */

@@ -4,7 +4,7 @@
 
 import * as store from "./storage.js";
 import { KEYS, BACKUP_KEYS } from "./storage.js";
-import { DEFAULT_MENU } from "./defaultMenu.js";
+import { DEFAULT_MENU, defaultBreakfast } from "./defaultMenu.js";
 import { SECTIONS } from "./sections.js";
 import { clone } from "./text.js";
 import { isoDate, mondayOf } from "./calendar.js";
@@ -14,13 +14,19 @@ import { isoDate, mondayOf } from "./calendar.js";
 /* Menús guardados con versiones antiguas de la app: se pasan al formato actual (comida / cena) */
 function migrate(menu){
   return menu.map(week=>week.map((day,di)=>{
-    if(day && Array.isArray(day.meals)) return day;
-    const ds=(day && day.dishes) || [];
-    if(di>=5 || ds.length<2) return {meals:[{id:"libre",name:"Libre",dishes:ds}]};
-    return {meals:[
-      {id:"comida",name:"Comida",dishes:ds.slice(0,-1)},
-      {id:"cena",  name:"Cena",  dishes:ds.slice(-1)}
-    ]};
+    if(!(day && Array.isArray(day.meals))){
+      const ds=(day && day.dishes) || [];
+      if(di>=5 || ds.length<2) day={meals:[{id:"libre",name:"Libre",dishes:ds}]};
+      else day={meals:[
+        {id:"comida",name:"Comida",dishes:ds.slice(0,-1)},
+        {id:"cena",  name:"Cena",  dishes:ds.slice(-1)}
+      ]};
+    }
+    /* desde sept. 2026 cada día tiene también desayuno, el primero */
+    if(!day.meals.some(m=>m.id==="desayuno")){
+      day.meals.unshift({id:"desayuno",name:"Desayuno",dishes:[defaultBreakfast()]});
+    }
+    return day;
   }));
 }
 function loadMenu(){
@@ -70,7 +76,13 @@ export function aisleOrder(){
 export function saveAisles(ids){ store.setJSON(KEYS.aisles, ids); }
 export function defaultAisles(){ return SECTIONS.map(s=>s.id); }
 
+/* ---------- productos fijos (casa, limpieza…) ---------- */
+export function staples(){ const s=store.getJSON(KEYS.staples,[]); return Array.isArray(s) ? s : []; }
+export function saveStaples(list){ store.setJSON(KEYS.staples,list); }
+
 /* ---------- ajustes ---------- */
+export function hideDone(){ return store.get(KEYS.hideDone)==="1"; }
+export function setHideDone(on){ store.set(KEYS.hideDone, on?"1":"0"); }
 export function cycleStart(){ return store.get(KEYS.start); }
 export function setCycleStart(iso){ if(iso) store.set(KEYS.start,iso); }
 export function peopleSetting(){ return store.get(KEYS.people); }
@@ -101,7 +113,7 @@ export function snoozeUntil(){ return parseInt(store.get(KEYS.snooze),10) || nul
 export function setSnooze(until){ store.set(KEYS.snooze,String(until)); }
 /* ¿Hay algo tuyo que merezca copia? (cambios en el menú, la lista, pasillos…) */
 export function hasOwnData(){
-  return [KEYS.menu,KEYS.basics,KEYS.aisles,KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3"]
+  return [KEYS.menu,KEYS.basics,KEYS.aisles,KEYS.staples,KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3"]
     .some(k=>store.get(k)!=null);
 }
 export function exportData(){

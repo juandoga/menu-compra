@@ -129,3 +129,10 @@ export const DEFAULT_MENU=[
   ]}
 ]
 ];
+
+/* Desayuno de partida para cada día. Sin cantidades: pon las tuyas al editarlo. */
+export function defaultBreakfast(){
+  return {name:"Tostadas con tomate y aceite", ingredients:[
+    ing(null,null,"pan (para tostar)"), ing(null,null,"tomate"), ing(null,null,"aceite de oliva")
+  ]};
+}

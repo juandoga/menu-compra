@@ -15,13 +15,7 @@ import { cycleWeekOn, isoDate, startFor, weekdayIndex } from "../model/calendar.
 const DAY_MS=864e5;
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const MONTHS_SHORT=["ene","feb","mar","abr","may","jun","jul","ago","sept","oct","nov","dic"];
-/* qué tipo de comida es, para darle su color: comida, cena o libre */
-function mealKind(meal){
-  const k=norm(meal.id||meal.name);
-  if(k.indexOf("cena")===0) return "cena";
-  if(k.indexOf("comida")===0) return "comida";
-  return "libre";
-}
+const mealKind=rules.mealKind; /* comida, cena, desayuno o libre */
 
 /* now: de dónde sale la hora. Se puede cambiar en las pruebas para simular otro día. */
 export function createAppViewModel(now=()=>new Date()){
@@ -36,7 +30,8 @@ export function createAppViewModel(now=()=>new Date()){
     shopAutoWeek:false,  /* la compra saltó sola a la semana siguiente (fin de semana) */
     shopDeclined:null,   /* día en que dijiste «ver la de esta» */
     openDays:new Set(),
-    aisle:"all"          /* filtro de pasillo en la lista de la compra */
+    aisle:"all",         /* filtro de pasillo en la lista de la compra */
+    includePast:false    /* incluir en la compra los días de esta semana que ya han pasado */
   };
   st.week = st.curWeek==null ? 0 : st.curWeek;
   st.openDays.add(st.todayIdx);
@@ -53,7 +48,11 @@ export function createAppViewModel(now=()=>new Date()){
   const people=()=>rules.peopleCount(repo.peopleSetting());
   const basicOv=()=>repo.basicsOverrides();
   const isBasic=name=>rules.isBasic(menu(),basicOv(),name);
-  const items=w=>rules.shopItems(menu(),w,repo.weekState(w),people(),swapsFor(w));
+  /* desde qué día se compra: en la semana en curso, desde hoy (lo de días pasados ya no hace falta) */
+  const fromDay=w=>(!st.includePast && st.curWeek!=null && w===st.curWeek && !st.shopAutoWeek) ? st.todayIdx : 0;
+  const items=w=>rules.shopItems(menu(),w,repo.weekState(w),people(),swapsFor(w),
+    {fromDay:fromDay(w), staples:repo.staples()});
+  const isStaple=key=>String(key).indexOf("fijo::")===0;
   const dayName=d=>DAYS[d].full;
   const dishAt=ref=>menu()[st.week][ref.d].meals[ref.mi].dishes[ref.si];
   /* cambia la semana de lo marcado en la lista y lo guarda */
@@ -150,7 +149,7 @@ export function createAppViewModel(now=()=>new Date()){
         date: isCurrent ? addDays(mondayDate(),d).getDate() : null,
         isToday:d===st.todayIdx && (isCurrent || st.curWeek==null), past:isCurrent && d<st.todayIdx,
         weekend:d>=5, open:st.openDays.has(d),
-        summary:refs.map(r=>({meal:r.meal.name, kind:mealKind(r.meal), text:r.meal.dishes.length ? r.meal.dishes.map(x=>x.name).join(" · ") : "—"})),
+        summary:refs.filter(r=>mealKind(r.meal)!=="desayuno").map(r=>({meal:r.meal.name, kind:mealKind(r.meal), text:r.meal.dishes.length ? r.meal.dishes.map(x=>x.name).join(" · ") : "—"})),
         meals:refs.map(r=>mealVM(r,d)),
         hasPrep:refs.some(r=>r.meal.dishes.some(x=>x.prep && String(x.prep).trim()))
       }));
@@ -171,10 +170,14 @@ export function createAppViewModel(now=()=>new Date()){
       const main=shown.filter(i=>!i.allOptional);
       const opt=shown.filter(i=>i.allOptional);
       const done=main.filter(i=>s.checked[i.key]).length;
+      const hideDone=repo.hideDone();
       const row=i=>({
         key:i.key, name:cap(i.item), hint:i.hint, qty:rules.itemQtyText(i), checked:!!s.checked[i.key],
-        tag: i.custom ? "tuyo" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
+        tag: i.staple ? "siempre" : i.custom ? "tuyo" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
       });
+      const visible=rows=>hideDone ? rows.filter(r=>!r.checked) : rows;
+      const fd=fromDay(st.week);
+      const canTrimPast = st.curWeek!=null && st.week===st.curWeek && !st.shopAutoWeek && st.todayIdx>0;
       const sections=repo.aisleOrder().map(id=>{
         const its=main.filter(i=>sectionFor(i.item)===id);
         return {id, label:sectionLabel(id), done:its.filter(i=>s.checked[i.key]).length, rows:its.map(row)};
@@ -183,13 +186,17 @@ export function createAppViewModel(now=()=>new Date()){
       return {
         filters:[{id:"all", label:"Todo", count:main.length, selected:aisle==="all"}]
           .concat(sections.map(x=>({id:x.id, label:x.label, count:x.done+"/"+x.rows.length, selected:aisle===x.id}))),
-        visibleSections: aisle==="all" ? sections : sections.filter(x=>x.id===aisle),
+        visibleSections: (aisle==="all" ? sections : sections.filter(x=>x.id===aisle))
+          .map(x=>({...x, rows:visible(x.rows)})).filter(x=>x.rows.length),
         showOptionals: aisle==="all",
+        hideDone, hiddenDone: hideDone ? done+opt.filter(i=>s.checked[i.key]).length : 0,
+        /* días ya pasados que no se cuentan (o que sí, si lo has pedido) */
+        pastDays: canTrimPast ? {names:DAYS.slice(0,st.todayIdx).map(d=>d.full.toLowerCase()), excluded:fd>0} : null,
         autoWeek: st.shopAutoWeek ? st.week+1 : null,
         done, total:main.length, pct: main.length ? Math.round(done/main.length*100) : 0,
         hideBasics:hide,
         people:people(), basePeople:rules.BASE_PEOPLE,
-        sections, optionals:opt.map(row),
+        sections, optionals:visible(opt.map(row)),
         empty: shown.length ? null : (hide ? "Todo lo de esta semana son básicos que ya tienes." : "No hay nada en la lista de esta semana.")
       };
     },
@@ -204,8 +211,9 @@ export function createAppViewModel(now=()=>new Date()){
         if(i.extra && i.extra.length) note+=" Viene en unidades distintas ("+rules.itemQtyText(i)+"): si la cambias, se queda sólo la tuya.";
         if(!i.overridden && people()!==rules.BASE_PEOPLE) note+=" Ya está calculada para "+people()+" personas.";
       }
+      if(i.staple) note="Sale en la lista todas las semanas. Si esta semana no lo necesitas, quítalo sólo de esta semana.";
       return {
-        key:i.key, custom:i.custom, title:cap(i.item),
+        key:i.key, custom:i.custom, staple:!!i.staple, title:cap(i.item),
         subtitle:sectionLabel(sectionFor(i.item))+" · Semana "+(st.week+1),
         hint:i.hint, qty: i.qty!=null ? fmt(i.qty) : "", unit:i.unit||"", note,
         basic:!i.custom && isBasic(i.item),
@@ -237,7 +245,8 @@ export function createAppViewModel(now=()=>new Date()){
       });
       const opt=its.filter(i=>i.allOptional);
       if(opt.length){ lines.push("OPCIONALES"); opt.forEach(line); lines.push(""); }
-      return ("Compra · semana "+(st.week+1)+"\n\n"+lines.join("\n")).trim();
+      const fd=fromDay(st.week);
+      return ("Compra · semana "+(st.week+1)+(fd>0 ? " (desde el "+dayName(fd).toLowerCase()+")" : "")+"\n\n"+lines.join("\n")).trim();
     },
 
     /* editor de un plato: devuelve el plato (se edita a través de los comandos de abajo) */
@@ -248,6 +257,7 @@ export function createAppViewModel(now=()=>new Date()){
       const sd = ref.shownDay==null ? ref.d : ref.shownDay;
       return {
         subtitle:dayName(sd)+" · "+meal.name+" · Semana "+(st.week+1),
+        kind:mealKind(meal),
         name:dish.name,
         ingredients:dish.ingredients.map(i=>({item:i.item, qty:i.qty!=null?i.qty:"", unit:i.unit||""})),
         prep:dish.prep||"", prepWarn:dish.prepWarn!==false
@@ -333,7 +343,7 @@ export function createAppViewModel(now=()=>new Date()){
       st.todayIdx=weekdayIndex(now());
       st.curWeek=cycleWeekOn(now(),repo.cycleStart());
       if(st.curWeek!=null) st.week=st.curWeek;
-      st.shopAutoWeek=false;
+      st.shopAutoWeek=false; st.includePast=false;
       st.openDays.clear(); st.openDays.add(st.todayIdx);
       this.setView(st.view);
       return true;
@@ -347,6 +357,33 @@ export function createAppViewModel(now=()=>new Date()){
     /* --- lista de la compra --- */
     toggleChecked(key){ editWeekState(st.week,s=>{ s.checked[key]=!s.checked[key]; }); notify(); },
     setAisle(id){ st.aisle=id; notify(); },
+    toggleHideDone(){ repo.setHideDone(!repo.hideDone()); notify(); },
+    setIncludePast(on){ st.includePast=!!on; notify(); },
+
+    /* --- productos fijos --- */
+    /* algo que añadiste esta semana pasa a salir todas las semanas */
+    makeStaple(key){
+      const w=st.week, beforeWeek=clone(repo.weekState(w)), beforeStaples=repo.staples();
+      const c=(beforeWeek.custom||[]).find(x=>x.key===key);
+      if(!c) return null;
+      const nk="fijo::"+Date.now()+"::"+norm(c.item);
+      repo.saveStaples(beforeStaples.concat([{key:nk, item:c.item, qty:c.qty, unit:c.unit}]));
+      editWeekState(w,s=>{
+        s.custom=(s.custom||[]).filter(x=>x.key!==key);
+        if(s.checked[key]){ s.checked[nk]=true; delete s.checked[key]; }
+      });
+      notify();
+      return ()=>{ repo.saveStaples(beforeStaples); repo.saveWeekState(w,beforeWeek); notify(); };
+    },
+    /* deja de salir todas las semanas */
+    unStaple(key){
+      const beforeStaples=repo.staples();
+      repo.saveStaples(beforeStaples.filter(x=>x.key!==key));
+      editWeekState(st.week,s=>{ delete s.checked[key]; });
+      notify();
+      return ()=>{ repo.saveStaples(beforeStaples); notify(); };
+    },
+    staplesList(){ return repo.staples().map(x=>({key:x.key, name:cap(x.item)})); },
     toggleHideBasics(){ repo.setHideBasics(!repo.hideBasics()); notify(); },
     changePeople(delta){
       const n=Math.min(12,Math.max(1,people()+delta));
@@ -364,6 +401,10 @@ export function createAppViewModel(now=()=>new Date()){
     },
     setItemQty(key,qty,unit){
       const v = qty==null || isNaN(qty) ? null : qty;
+      if(isStaple(key)){
+        repo.saveStaples(repo.staples().map(x=>x.key===key ? {...x, qty:v, unit:unit||null} : x));
+        notify(); return;
+      }
       editWeekState(st.week,s=>{
         const c=(s.custom||[]).find(x=>x.key===key);
         if(c){ c.qty=v; c.unit=unit||null; }
@@ -393,9 +434,29 @@ export function createAppViewModel(now=()=>new Date()){
     closeShopping(){
       const w=st.week;
       let before;
-      editWeekState(w,s=>{ before=clone(s.checked); s.checked={}; });
+      let beforeRemoved;
+      editWeekState(w,s=>{
+        before=clone(s.checked); beforeRemoved=clone(s.removed||[]);
+        s.checked={};
+        s.removed=(s.removed||[]).filter(k=>!isStaple(k)); /* los fijos vuelven la próxima vez */
+      });
       notify();
-      return ()=>{ editWeekState(w,s=>{ s.checked=before; }); notify(); };
+      return ()=>{ editWeekState(w,s=>{ s.checked=before; s.removed=beforeRemoved; }); notify(); };
+    },
+
+    /* --- desayunos: copiar uno a todos los días (de esta semana o de las 4) --- */
+    copyBreakfast(ref,scope){
+      const src=clone(dishAt(ref));
+      const before=JSON.stringify(menu());
+      const weeks = scope==="all" ? [0,1,2,3] : [st.week];
+      let n=0;
+      weeks.forEach(w=>menu()[w].forEach((day,d)=>{
+        const m=day.meals.find(x=>mealKind(x)==="desayuno");
+        if(!m || (w===st.week && d===ref.d)) return;
+        m.dishes=[clone(src)]; n++;
+      }));
+      repo.saveMenu(); notify();
+      return {count:n, undo:()=>{ repo.restoreMenuSnapshot(before); notify(); }};
     },
 
     /* --- editar platos --- */

@@ -109,3 +109,66 @@ test("ViewModel: marcar, cerrar la compra y deshacer", ()=>{
   deshacer();
   assert.equal(vm.compra().done,1);
 });
+
+/* ---------- cambios de sept. 2026: días pasados, fijos y desayunos ---------- */
+
+test("la compra puede empezar en un día: lo de días pasados no cuenta", ()=>{
+  const m=menuPrueba();
+  const desdeMartes=buildList(m,0,[],1);
+  assert.equal(itemQtyText(desdeMartes.find(i=>i.key==="cebollas")),"150 g"); /* el lunes (2 ud) ya pasó */
+  const desdeMiercoles=buildList(m,0,[],2);
+  assert.equal(desdeMiercoles.find(i=>i.key==="cebollas"),undefined);
+});
+
+test("los productos fijos salen todas las semanas salvo «esta semana no»", async ()=>{
+  const { shopItems } = await import("../js/model/rules.js");
+  const fijos=[{key:"fijo::1::bolsas de basura",item:"bolsas de basura",qty:null,unit:null}];
+  const l=shopItems(menuPrueba(),2,vacio,2,[],{staples:fijos});
+  assert.ok(l.find(i=>i.key==="fijo::1::bolsas de basura" && i.staple));
+  const sinEsta=shopItems(menuPrueba(),2,{...vacio,removed:["fijo::1::bolsas de basura"]},2,[],{staples:fijos});
+  assert.equal(sinEsta.find(i=>i.staple),undefined);
+});
+
+test("cada día tiene desayuno y no convierte en «básico» lo que lleva", async ()=>{
+  localStorage.clear();
+  const repo=await import("../js/model/repository.js");
+  repo.restoreMenuSnapshot(null);
+  const m=repo.getMenu();
+  assert.ok(m.every(w=>w.every(d=>d.meals[0].id==="desayuno" && d.meals[0].dishes.length===1)));
+  const { isBasic } = await import("../js/model/rules.js");
+  assert.equal(isBasic(m,{},"pan"),false); /* sale en todos los desayunos, pero no cuenta */
+});
+
+test("ViewModel: el miércoles la compra de esta semana no suma lunes ni martes", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,8,30,12)); /* miércoles */
+  vm.setCurrentWeek(0);
+  const c=vm.compra();
+  assert.deepEqual(c.pastDays,{names:["lunes","martes"],excluded:true});
+  const sinPasados=c.total;
+  vm.setIncludePast(true);
+  assert.ok(vm.compra().total>=sinPasados);
+  assert.equal(vm.compra().pastDays.excluded,false);
+});
+
+test("ViewModel: fijar un producto, cerrar la compra y ocultar lo comprado", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,8,28,12)); /* lunes */
+  vm.setCurrentWeek(0);
+  vm.addCustom("lavavajillas",null,"");
+  const key=vm.compra().sections.flatMap(s=>s.rows).find(r=>r.name==="Lavavajillas").key;
+  vm.makeStaple(key);
+  const fijo=vm.compra().sections.find(s=>s.id==="hogar").rows[0];
+  assert.equal(fijo.tag,"siempre");
+  vm.removeItem(fijo.key); /* «esta semana no» */
+  assert.equal(vm.compra().sections.find(s=>s.id==="hogar"),undefined);
+  vm.closeShopping(); /* la semana siguiente vuelve */
+  assert.ok(vm.compra().sections.find(s=>s.id==="hogar"));
+  /* ocultar comprados */
+  const r=vm.compra().visibleSections[0].rows[0];
+  vm.toggleChecked(r.key);
+  vm.toggleHideDone();
+  const c=vm.compra();
+  assert.equal(c.hiddenDone,1);
+  assert.ok(!c.visibleSections.flatMap(s=>s.rows).some(x=>x.key===r.key));
+});

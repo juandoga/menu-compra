@@ -19,9 +19,12 @@ export function openIngredientSheet(vm,key){
     unit.addEventListener("change",save);
     host.append(block("Cantidad a comprar",el("div",{className:"qtyrow"},qty,unit),i.note ? hintLine(i.note) : null));
 
-    if(i.custom){
+    if(i.staple){
+      host.append(block("Producto fijo",
+        hintLine("Sale en la lista todas las semanas. Al cerrar la compra vuelve a aparecer sin marcar.",{marginTop:"0"})));
+    }else if(i.custom){
       host.append(block("Añadido por ti",
-        hintLine("Este producto no viene del menú, lo añadiste tú a la lista de esta semana.",{marginTop:"0"})));
+        hintLine("Lo añadiste tú a la lista de esta semana. Si lo compras a menudo (bolsas de basura, lavavajillas…), fíjalo y saldrá todas las semanas.",{marginTop:"0"})));
     }else{
       host.append(block("Aparece en "+i.origins.length+(i.origins.length===1?" comida":" comidas"),
         i.origins.map(o=>el("div",{className:"origin"},
@@ -30,14 +33,37 @@ export function openIngredientSheet(vm,key){
           el("span",{className:"oq",text:o.qty})))));
     }
 
-    host.append(el("div",{className:"sheet-actions"},
-      i.custom ? null : el("button",{className:"btn ghost full",text:i.basic?"Quitar de básicos":"Marcar como básico",
-        onClick:()=>{ vm.toggleBasic(i.key); closeSheet(); }}),
-      el("button",{className:"textdanger",text:"Quitar de la lista",onClick:()=>{
+    const acts=el("div",{className:"sheet-actions"});
+    if(i.staple){
+      acts.append(
+        el("button",{className:"btn ghost full",text:"Esta semana no",onClick:()=>{
+          const undo=vm.removeItem(i.key);
+          closeSheet();
+          showUndo(i.title+" quitado sólo esta semana",undo);
+        }}),
+        el("button",{className:"textdanger",text:"Dejar de comprarlo siempre",onClick:()=>{
+          const undo=vm.unStaple(i.key);
+          closeSheet();
+          showUndo(i.title+" ya no es fijo",undo);
+        }}));
+    }else{
+      if(i.custom){
+        acts.append(el("button",{className:"btn full",onClick:()=>{
+          const undo=vm.makeStaple(i.key);
+          closeSheet();
+          showUndo(i.title+" saldrá todas las semanas",undo);
+        }},svg(ICON.pin,"2"),"Comprar todas las semanas"));
+      }else{
+        acts.append(el("button",{className:"btn ghost full",text:i.basic?"Quitar de básicos":"Marcar como básico",
+          onClick:()=>{ vm.toggleBasic(i.key); closeSheet(); }}));
+      }
+      acts.append(el("button",{className:"textdanger",text:"Quitar de la lista",onClick:()=>{
         const undo=vm.removeItem(i.key);
         closeSheet();
         showUndo(i.title+" quitado de la lista",undo);
-      }})));
+      }}));
+    }
+    host.append(acts);
   });
 }
 

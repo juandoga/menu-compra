@@ -4,7 +4,7 @@
 import { el, svg, ICON } from "./dom.js";
 import { openDishSheet } from "./sheets/dishSheet.js";
 
-const MEAL_ICON={ comida:ICON.sun, cena:ICON.moon, libre:ICON.star };
+const MEAL_ICON={ desayuno:ICON.cup, comida:ICON.sun, cena:ICON.moon, libre:ICON.star };
 
 export function mealCard(vm,meal,{addDish}={}){
   return el("article",{className:"meal "+meal.kind},

@@ -19,6 +19,7 @@
   --comida:#F6C343; --on-comida:#16140F; --comida-chip:rgba(255,255,255,.62);
   --cena:#2A2C74;   --on-cena:#FFFFFF;   --cena-chip:rgba(255,255,255,.16);
   --libre:#FFE1D8;  --on-libre:#16140F;  --libre-chip:rgba(255,255,255,.7);
+  --desayuno:#CFE6D6; --on-desayuno:#16140F; --desayuno-chip:rgba(255,255,255,.66);
   --basic-tint:#FBEDC4; --basic-ink:#6B4E00;
   --strong:#16140F;       /* tarjetas fuertes, barra de abajo, aviso */
   --on-strong:#FFFFFF;
@@ -75,6 +76,7 @@ h1,h2,h3{margin:0;}
   background:var(--surface);color:var(--ink);display:grid;place-items:center;padding:0;position:relative;
 }
 .hbtn svg,.ibtn svg{width:20px;height:20px;}
+.ibtn[aria-pressed="true"]{background:var(--ink);color:var(--paper);}
 .hbtn.nudge::after{
   content:"";position:absolute;top:0;right:0;width:11px;height:11px;border-radius:50%;
   background:var(--accent);border:2px solid var(--paper);
@@ -151,6 +153,10 @@ h1,h2,h3{margin:0;}
 }
 .meal.cena{--chip:var(--cena-chip);background:var(--cena);color:var(--on-cena);}
 .meal.libre{--chip:var(--libre-chip);background:var(--libre);color:var(--on-libre);}
+/* desayuno: menta, más pequeño; va primero y se repite casi igual cada día */
+.meal.desayuno{--chip:var(--desayuno-chip);background:var(--desayuno);color:var(--on-desayuno);padding:14px 16px 16px;gap:10px;border-radius:24px;}
+.meal.desayuno .dish-name{font-size:21px;}
+.meal.desayuno .edit-btn{margin-top:-8px;}
 .meal-head{display:flex;align-items:center;gap:8px;min-height:24px;}
 .meal-head svg{width:18px;height:18px;flex:0 0 auto;}
 .meal-label{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}
@@ -202,6 +208,7 @@ h1,h2,h3{margin:0;}
 .sw{display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--comida);flex:0 0 auto;}
 .sw.cena{background:var(--cena);}
 .sw.libre{background:var(--accent);}
+.sw.desayuno{background:var(--desayuno);}
 .days{display:flex;flex-direction:column;}
 .day{border-top:1px solid var(--line);}
 .day:first-child{border-top:0;}
@@ -302,8 +309,13 @@ h1,h2,h3{margin:0;}
 .tag{font-size:11px;font-weight:700;letter-spacing:.03em;padding:3px 8px;border-radius:999px;white-space:nowrap;flex:0 0 auto;}
 .tag.basic{background:var(--basic-tint);color:var(--basic-ink);}
 .tag.mine{background:var(--accent-tint);color:var(--accent-ink);}
+.tag.fixed{background:var(--strong);color:var(--on-strong);}
 .tag.opt{border:1px solid var(--line-strong);color:var(--ink-soft);}
 .sec.optionals .row-name{color:var(--ink-soft);}
+/* línea discreta con un enlace (comprados ocultos, días pasados) */
+.infos{display:flex;flex-direction:column;margin:-8px 0 -6px;}
+.infoline{display:flex;align-items:center;gap:4px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-soft);margin:0;}
+.infoline .linkbtn{min-height:36px;padding:0 4px;font-size:13.5px;}
 .empty{text-align:center;padding:30px 20px;color:var(--ink-soft);font-size:14px;}
 /* añadir, fijo abajo encima de la barra */
 .addbar{
@@ -384,6 +396,8 @@ textarea.field{min-height:120px;resize:vertical;font-size:12px;line-height:1.6;f
 .qtyrow .field{flex:1;}
 .btn{min-height:52px;border:0;border-radius:999px;padding:0 20px;font-weight:700;font-size:15px;background:var(--ink);color:var(--paper);}
 .btn.ghost{background:var(--paper);color:var(--ink);border:2px solid var(--line-strong);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+.btn svg{width:18px;height:18px;flex:0 0 auto;}
 .btn:active{transform:scale(.985);}
 .btn.full{width:100%;}
 a.btn{display:flex;align-items:center;justify-content:center;}

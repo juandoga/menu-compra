@@ -9,6 +9,8 @@ export function renderCompra(host,vm){
 
   host.append(el("div",{className:"vhead"},
     el("h1",{text:"Compra"}),
+    el("button",{className:"ibtn","aria-label":"Ocultar lo ya comprado","aria-pressed":d.hideDone?"true":"false",
+      onClick:()=>vm.toggleHideDone()},svg(d.hideDone?ICON.eyeOff:ICON.eye,"2")),
     el("button",{className:"ibtn","aria-label":"Compartir la lista",onClick:()=>openShareSheet(vm)},svg(ICON.share,"2")),
     el("button",{className:"ibtn","aria-label":"Orden de los pasillos",onClick:()=>openAisleSheet(vm)},svg(ICON.sort,"2"))));
 
@@ -48,6 +50,23 @@ export function renderCompra(host,vm){
         f.label.replace(" y verdura",""), el("span",{text:String(f.count)})))));
   }
 
+  /* avisos breves: días ya pasados (no se compran, salvo que los pidas) y comprados ocultos */
+  const infos=el("div",{className:"infos"});
+  if(d.pastDays){
+    const n=d.pastDays.names, many=n.length>1;
+    const days=many ? n.slice(0,-1).join(", ")+" y "+n[n.length-1] : "el "+n[0];
+    infos.append(el("p",{className:"infoline"},
+      (d.pastDays.excluded ? "Sin " : "Con ")+days+(many?", ya pasados.":", ya pasado."),
+      linkBtn(d.pastDays.excluded ? (many?"Incluirlos":"Incluirlo") : (many?"Quitarlos":"Quitarlo"),
+        ()=>vm.setIncludePast(d.pastDays.excluded))));
+  }
+  if(d.hideDone && d.hiddenDone){
+    infos.append(el("p",{className:"infoline"},
+      d.hiddenDone+(d.hiddenDone===1?" comprado oculto.":" comprados ocultos."),
+      linkBtn("Mostrar",()=>vm.toggleHideDone())));
+  }
+  if(infos.childNodes.length) host.append(infos);
+
   if(d.empty) host.append(el("div",{className:"empty",text:d.empty}));
 
   const row=r=>el("div",{className:"row"+(r.checked?" done":"")},
@@ -58,7 +77,7 @@ export function renderCompra(host,vm){
       el("span",{className:"row-text"},
         el("span",{className:"row-name",text:r.name}),
         r.hint ? el("span",{className:"row-hint",text:r.hint}) : null),
-      r.tag ? el("span",{className:"tag "+({"tuyo":"mine","opcional":"opt","básico":"basic"})[r.tag],text:r.tag}) : null,
+      r.tag ? el("span",{className:"tag "+({"tuyo":"mine","siempre":"fixed","opcional":"opt","básico":"basic"})[r.tag],text:r.tag}) : null,
       r.qty ? el("span",{className:"row-qty",text:r.qty}) : null));
 
   const section=(title,count,rows,extra)=>el("section",{className:"sec"+(extra||"")},

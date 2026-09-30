@@ -8,9 +8,12 @@ export const SECTIONS=[
   {id:"lacteos",  label:"Huevos y lácteos"},
   {id:"panaderia",label:"Panadería"},
   {id:"despensa", label:"Despensa"},
+  {id:"hogar",    label:"Casa y limpieza"},
   {id:"otros",    label:"Otros"}
 ];
 const RULES=[
+  /* va primero: «pasta de dientes» o «papel de cocina» no son comida */
+  [/(bolsa|basura|lavavajilla|detergente|suavizante|lejia|friegasuelo|limpia|jabon|gel\b|champu|papel|servilleta|estropajo|bayeta|fregona|panal|toallita|pasta de dientes|dentifrico|desodorante|cepillo|film|aluminio|insecticida|ambientador|pilas?\b|velas?\b)/,"hogar"],
   [/(caldo|tomate frito|salsa|aceite|vinagre|mayonesa|alioli|ketchup|mostaza|harina|pan rallado|pimenton|\bsal\b|pimienta|nuez moscada|vino|soja|patatas fritas|nachos|guacamole|jalapeno|pepinillo|guindilla|aceituna|croqueta|empanadilla|gnocchi)/,"despensa"],
   [/(obleas|masa de pizza|brioche|pan de molde|\bpan\b|panes)/,"panaderia"],
   [/(huevo|nata|leche|queso|mozzarella|parmesano|cheddar|mantequilla)/,"lacteos"],

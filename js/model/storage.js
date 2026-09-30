@@ -14,11 +14,13 @@ export const KEYS = {
   swaps:   "menuCompraApp_swaps_v1",      /* cambios de día de la semana en curso */
   backup:  "menuCompraApp_lastBackup_v1", /* última copia de seguridad */
   seen:    "menuCompraApp_firstSeen_v1",  /* desde cuándo se usa esta versión */
-  snooze:  "menuCompraApp_backupSnooze_v1"/* «recuérdamelo luego» */
+  snooze:  "menuCompraApp_backupSnooze_v1",/* «recuérdamelo luego» */
+  staples: "menuCompraApp_staples_v1",    /* productos fijos: salen todas las semanas */
+  hideDone:"menuCompraApp_hideChecked_v1" /* ocultar lo ya comprado en la lista */
 };
 
 /* Lo que entra en la copia de seguridad */
-export const BACKUP_KEYS = [KEYS.menu,KEYS.basics,KEYS.hide,KEYS.theme,KEYS.aisles,KEYS.start,KEYS.people,
+export const BACKUP_KEYS = [KEYS.menu,KEYS.basics,KEYS.hide,KEYS.theme,KEYS.aisles,KEYS.start,KEYS.people,KEYS.staples,KEYS.hideDone,
   KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3"];
 
 /* Si el navegador no deja guardar (modo privado…), la app sigue funcionando sin romperse */
