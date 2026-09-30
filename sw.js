@@ -1,7 +1,7 @@
 /* Menuse — service worker: la app y la lista funcionan sin conexión.
    Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…).
    Si creas un archivo nuevo en js/ o css/, añádelo a la lista ASSETS. */
-const CACHE = "menuse-v7";
+const CACHE = "menuse-v8";
 const ASSETS = [
   "./",
   "./index.html",
@@ -47,6 +47,8 @@ self.addEventListener("install", e => {
   );
 });
 
+/* Al activarse una versión nueva se borra lo guardado de las anteriores
+   (la app detecta el cambio y ofrece «Recargar») */
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
@@ -55,44 +57,43 @@ self.addEventListener("activate", e => {
   );
 });
 
-function tellEveryone() {
-  pendingUpdate = true;
-  return self.clients.matchAll({ type: "window" })
-    .then(cs => cs.forEach(c => c.postMessage({ type: "update" })));
-}
-
-/* La app pregunta al arrancar: «¿hay algo nuevo?» */
-self.addEventListener("message", e => {
-  if (e.data && e.data.type === "hello" && pendingUpdate && e.source) {
-    e.source.postMessage({ type: "update" });
+/* Guarda una copia de lo que llega de internet */
+function keep(req, res) {
+  if (res && res.status === 200 && (res.type === "basic" || res.type === "cors")) {
+    const copy = res.clone();
+    caches.open(CACHE).then(c => c.put(req, copy)).catch(() => {});
   }
-});
-
-/* Firma de una respuesta: sirve para saber si un archivo ha cambiado */
-function stamp(res) {
-  return res.headers.get("etag") || res.headers.get("last-modified") || "";
+  return res;
 }
 
-/* Sirve lo guardado al instante y refresca por detrás.
-   Si un archivo de la app que llega de internet es distinto del guardado, avisa a la app. */
+/* Espera a internet como mucho unos segundos; si no llega, usa lo guardado */
+function withTimeout(p, ms) {
+  return new Promise((ok, ko) => {
+    const t = setTimeout(() => ko(new Error("lento")), ms);
+    p.then(r => { clearTimeout(t); ok(r); }, err => { clearTimeout(t); ko(err); });
+  });
+}
+
 self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
-  /* archivos propios de la app (no las fuentes de Google): si cambian, hay versión nueva */
-  const isOwn = new URL(req.url).origin === self.location.origin;
-  const hitP = caches.match(req);
-  const netP = hitP.then(hit => fetch(req).then(res => ({ hit, res, copy: res.clone() })));
-  /* trabajo de fondo: guardar lo nuevo y, si la página cambió, avisar */
-  e.waitUntil(
-    netP.then(({ hit, res, copy }) => {
-      if (!(res && res.status === 200 && (res.type === "basic" || res.type === "cors"))) return;
-      const changed = isOwn && hit && stamp(hit) && stamp(res) && stamp(hit) !== stamp(res);
-      return caches.open(CACHE)
-        .then(c => c.put(req, copy))
-        .then(() => changed ? new Promise(r => setTimeout(r, 1500)).then(tellEveryone) : null);
-    }).catch(() => {})
-  );
+  const own = new URL(req.url).origin === self.location.origin;
+
+  if (own) {
+    /* Archivos de la app: primero internet (así nunca se mezclan versiones viejas y nuevas);
+       sin conexión, o si tarda más de 4 s, lo guardado. «no-cache» pregunta al servidor si
+       ha cambiado: si no, la respuesta es mínima. */
+    e.respondWith(
+      withTimeout(fetch(req, { cache: "no-cache" }), 4000)
+        .then(res => keep(req, res))
+        .catch(() => caches.match(req, { ignoreSearch: true })
+          .then(hit => hit || (req.mode === "navigate" ? caches.match("./index.html") : Response.error())))
+    );
+    return;
+  }
+
+  /* Tipografías de Google: no cambian, lo guardado primero */
   e.respondWith(
-    hitP.then(hit => hit || netP.then(x => x.res).catch(() => hit))
+    caches.match(req).then(hit => hit || fetch(req).then(res => keep(req, res)))
   );
 });
