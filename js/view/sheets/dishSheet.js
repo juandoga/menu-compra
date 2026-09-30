@@ -56,20 +56,6 @@ export function openDishSheet(vm,ref){
       el("div",{className:"switchrow",style:{marginTop:"10px"}},el("span",{text:"Avisarme la víspera"}),warn),
       hintLine("Aparece en Hoy el día anterior, para que no se te olvide descongelar o poner a remojo.")));
 
-    /* desayuno: suele ser el mismo cada día, así que se puede copiar de una vez */
-    if(d.kind==="desayuno"){
-      const copy=scope=>{
-        const r=vm.copyBreakfast(ref,scope);
-        closeSheet();
-        showUndo("Desayuno copiado a "+r.count+" días",r.undo);
-      };
-      host.append(block("Repetir este desayuno",
-        el("div",{className:"addrow",style:{marginTop:"0"}},
-          el("button",{className:"btn ghost",style:{flex:"1"},text:"Toda la semana",onClick:()=>copy("week")}),
-          el("button",{className:"btn ghost",style:{flex:"1"},text:"Las 4 semanas",onClick:()=>copy("all")})),
-        hintLine("Pone este mismo desayuno en los demás días. Luego puedes cambiar cualquiera.")));
-    }
-
     host.append(el("div",{className:"sheet-actions"},
       el("button",{className:"btn full",text:"Listo",onClick:closeSheet}),
       el("button",{className:"textdanger",text:"Eliminar este plato",onClick:()=>{

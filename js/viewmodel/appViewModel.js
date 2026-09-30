@@ -9,7 +9,7 @@ import * as repo from "../model/repository.js";
 import * as rules from "../model/rules.js";
 import { DAYS } from "../model/defaultMenu.js";
 import { sectionFor, sectionLabel } from "../model/sections.js";
-import { cap, clone, fmt, norm, parseItem, qtyText } from "../model/text.js";
+import { cap, clone, fmt, norm, parseItem, qtyText, itemKey } from "../model/text.js";
 import { cycleWeekOn, isoDate, startFor, weekdayIndex } from "../model/calendar.js";
 
 const DAY_MS=864e5;
@@ -166,14 +166,16 @@ export function createAppViewModel(now=()=>new Date()){
       const s=repo.weekState(st.week);
       const all=items(st.week);
       const hide=repo.hideBasics();
-      const shown=hide ? all.filter(i=>!isBasic(i.item)) : all;
+      const breakfast=all.filter(i=>i.breakfast); /* recordatorios: aparte y fuera del total */
+      const rest=all.filter(i=>!i.breakfast);
+      const shown=hide ? rest.filter(i=>!isBasic(i.item)) : rest;
       const main=shown.filter(i=>!i.allOptional);
       const opt=shown.filter(i=>i.allOptional);
       const done=main.filter(i=>s.checked[i.key]).length;
       const hideDone=repo.hideDone();
       const row=i=>({
         key:i.key, name:cap(i.item), hint:i.hint, qty:rules.itemQtyText(i), checked:!!s.checked[i.key],
-        tag: i.staple ? "siempre" : i.custom ? "tuyo" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
+        tag: i.breakfast ? null : i.staple ? "siempre" : i.custom ? "tuyo" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
       });
       const visible=rows=>hideDone ? rows.filter(r=>!r.checked) : rows;
       const fd=fromDay(st.week);
@@ -189,7 +191,7 @@ export function createAppViewModel(now=()=>new Date()){
         visibleSections: (aisle==="all" ? sections : sections.filter(x=>x.id===aisle))
           .map(x=>({...x, rows:visible(x.rows)})).filter(x=>x.rows.length),
         showOptionals: aisle==="all",
-        hideDone, hiddenDone: hideDone ? done+opt.filter(i=>s.checked[i.key]).length : 0,
+        hideDone, hiddenDone: hideDone ? done+opt.concat(breakfast).filter(i=>s.checked[i.key]).length : 0,
         /* días ya pasados que no se cuentan (o que sí, si lo has pedido) */
         pastDays: canTrimPast ? {names:DAYS.slice(0,st.todayIdx).map(d=>d.full.toLowerCase()), excluded:fd>0} : null,
         autoWeek: st.shopAutoWeek ? st.week+1 : null,
@@ -197,7 +199,8 @@ export function createAppViewModel(now=()=>new Date()){
         hideBasics:hide,
         people:people(), basePeople:rules.BASE_PEOPLE,
         sections, optionals:visible(opt.map(row)),
-        empty: shown.length ? null : (hide ? "Todo lo de esta semana son básicos que ya tienes." : "No hay nada en la lista de esta semana.")
+        breakfast:visible(breakfast.map(row)), breakfastCount:breakfast.length,
+        empty: (shown.length || breakfast.length) ? null : (hide ? "Todo lo de esta semana son básicos que ya tienes." : "No hay nada en la lista de esta semana.")
       };
     },
 
@@ -211,9 +214,10 @@ export function createAppViewModel(now=()=>new Date()){
         if(i.extra && i.extra.length) note+=" Viene en unidades distintas ("+rules.itemQtyText(i)+"): si la cambias, se queda sólo la tuya.";
         if(!i.overridden && people()!==rules.BASE_PEOPLE) note+=" Ya está calculada para "+people()+" personas.";
       }
-      if(i.staple) note="Sale en la lista todas las semanas. Si esta semana no lo necesitas, quítalo sólo de esta semana.";
+      if(i.staple) note = i.breakfast ? "Recordatorio para el desayuno: no cuenta en el total. Márcalo sólo si te hace falta."
+                                     : "Sale en la lista todas las semanas. Si esta semana no lo necesitas, quítalo sólo de esta semana.";
       return {
-        key:i.key, custom:i.custom, staple:!!i.staple, title:cap(i.item),
+        key:i.key, custom:i.custom, staple:!!i.staple, breakfast:!!i.breakfast, title:cap(i.item),
         subtitle:sectionLabel(sectionFor(i.item))+" · Semana "+(st.week+1),
         hint:i.hint, qty: i.qty!=null ? fmt(i.qty) : "", unit:i.unit||"", note,
         basic:!i.custom && isBasic(i.item),
@@ -239,12 +243,14 @@ export function createAppViewModel(now=()=>new Date()){
       const lines=[];
       const line=i=>{ const q=rules.itemQtyText(i); lines.push("- "+cap(i.item)+(q?" — "+q:"")); };
       repo.aisleOrder().forEach(id=>{
-        const part=its.filter(i=>!i.allOptional && sectionFor(i.item)===id);
+        const part=its.filter(i=>!i.allOptional && !i.breakfast && sectionFor(i.item)===id);
         if(!part.length) return;
         lines.push(sectionLabel(id).toUpperCase()); part.forEach(line); lines.push("");
       });
       const opt=its.filter(i=>i.allOptional);
       if(opt.length){ lines.push("OPCIONALES"); opt.forEach(line); lines.push(""); }
+      const bf=its.filter(i=>i.breakfast);
+      if(bf.length){ lines.push("PARA EL DESAYUNO (si falta)"); bf.forEach(line); lines.push(""); }
       const fd=fromDay(st.week);
       return ("Compra · semana "+(st.week+1)+(fd>0 ? " (desde el "+dayName(fd).toLowerCase()+")" : "")+"\n\n"+lines.join("\n")).trim();
     },
@@ -362,12 +368,12 @@ export function createAppViewModel(now=()=>new Date()){
 
     /* --- productos fijos --- */
     /* algo que añadiste esta semana pasa a salir todas las semanas */
-    makeStaple(key){
+    makeStaple(key,group){
       const w=st.week, beforeWeek=clone(repo.weekState(w)), beforeStaples=repo.staples();
       const c=(beforeWeek.custom||[]).find(x=>x.key===key);
       if(!c) return null;
       const nk="fijo::"+Date.now()+"::"+norm(c.item);
-      repo.saveStaples(beforeStaples.concat([{key:nk, item:c.item, qty:c.qty, unit:c.unit}]));
+      repo.saveStaples(beforeStaples.concat([{key:nk, item:c.item, qty:c.qty, unit:c.unit, group:group||"fijo"}]));
       editWeekState(w,s=>{
         s.custom=(s.custom||[]).filter(x=>x.key!==key);
         if(s.checked[key]){ s.checked[nk]=true; delete s.checked[key]; }
@@ -384,6 +390,15 @@ export function createAppViewModel(now=()=>new Date()){
       return ()=>{ repo.saveStaples(beforeStaples); notify(); };
     },
     staplesList(){ return repo.staples().map(x=>({key:x.key, name:cap(x.item)})); },
+    /* recordatorios de desayuno */
+    breakfastList(){ return repo.staples().filter(x=>x.group==="desayuno").map(x=>({key:x.key, name:cap(x.item)})); },
+    addBreakfast(name){
+      const n=String(name||"").trim(); if(!n) return null;
+      const before=repo.staples();
+      repo.saveStaples(before.concat([{key:"fijo::"+Date.now()+"::"+norm(n), item:n, qty:null, unit:null, group:"desayuno"}]));
+      notify();
+      return ()=>{ repo.saveStaples(before); notify(); };
+    },
     toggleHideBasics(){ repo.setHideBasics(!repo.hideBasics()); notify(); },
     changePeople(delta){
       const n=Math.min(12,Math.max(1,people()+delta));
@@ -416,7 +431,7 @@ export function createAppViewModel(now=()=>new Date()){
       const i=items(st.week).find(x=>x.key===key);
       if(!i) return;
       const ov=basicOv();
-      ov[norm(i.item)]=!isBasic(i.item);
+      ov[itemKey(i.item)]=!isBasic(i.item);
       repo.saveBasicsOverrides(ov);
       notify();
     },
@@ -442,21 +457,6 @@ export function createAppViewModel(now=()=>new Date()){
       });
       notify();
       return ()=>{ editWeekState(w,s=>{ s.checked=before; s.removed=beforeRemoved; }); notify(); };
-    },
-
-    /* --- desayunos: copiar uno a todos los días (de esta semana o de las 4) --- */
-    copyBreakfast(ref,scope){
-      const src=clone(dishAt(ref));
-      const before=JSON.stringify(menu());
-      const weeks = scope==="all" ? [0,1,2,3] : [st.week];
-      let n=0;
-      weeks.forEach(w=>menu()[w].forEach((day,d)=>{
-        const m=day.meals.find(x=>mealKind(x)==="desayuno");
-        if(!m || (w===st.week && d===ref.d)) return;
-        m.dishes=[clone(src)]; n++;
-      }));
-      repo.saveMenu(); notify();
-      return {count:n, undo:()=>{ repo.restoreMenuSnapshot(before); notify(); }};
     },
 
     /* --- editar platos --- */

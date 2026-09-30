@@ -2,7 +2,7 @@
    devuelven datos, sin mirar la pantalla ni el almacenamiento. Por eso se pueden
    probar solas (ver tests/logica.test.mjs). */
 
-import { norm, parseItem, qtyText } from "./text.js";
+import { norm, parseItem, qtyText, itemKey } from "./text.js";
 
 /* ---------- la semana tal y como se ve, con los cambios de día aplicados ---------- */
 /* Devuelve 7 días; cada día es una lista de comidas. Cada comida recuerda de qué
@@ -42,13 +42,14 @@ function weekCountFor(menu,key){
   const seen=new Set();
   eachDish(menu,(dish,ctx)=>{
     if(mealKind(ctx.meal)==="desayuno") return;
-    dish.ingredients.forEach(i=>{ if(norm(parseItem(i.item).short)===key) seen.add(ctx.wi); });
+    dish.ingredients.forEach(i=>{ if(itemKey(parseItem(i.item).short)===key) seen.add(ctx.wi); });
   });
   return seen.size;
 }
 export function isBasic(menu,overrides,shortName){
-  const k=norm(shortName);
+  const k=itemKey(shortName), old=norm(shortName); /* «old»: cómo se guardaba antes de sept. 2026 */
   if(Object.prototype.hasOwnProperty.call(overrides,k)) return !!overrides[k];
+  if(Object.prototype.hasOwnProperty.call(overrides,old)) return !!overrides[old];
   return weekCountFor(menu,k)>=3;
 }
 
@@ -71,7 +72,7 @@ export function buildList(menu,w,swaps,fromDay=0){
         dish.ingredients.forEach(i=>{
           const p=parseItem(i.item);
           if(!p.short) return;
-          const k=norm(p.short);
+          const k=itemKey(p.short); /* «patatas» y «patata» van juntas */
           let e=map.get(k);
           if(!e){
             e={key:k,item:p.short,hint:p.hint,custom:false,allOptional:true,origins:[],parts:[],firstUnit:null};
@@ -129,7 +130,7 @@ export function shopItems(menu,w,state,people,swaps,opts={}){
   const custom=(state.custom||[]).map(c=>({...c,custom:true,allOptional:false,hint:null,origins:[],extra:[]}));
   /* fijos: salen todas las semanas, salvo que digas «esta semana no» (queda en removed) */
   const staples=(opts.staples||[]).filter(x=>!state.removed.includes(x.key))
-    .map(x=>({...x,custom:true,staple:true,allOptional:false,hint:null,origins:[],extra:[]}));
+    .map(x=>({...x,custom:true,staple:true,breakfast:x.group==="desayuno",allOptional:false,hint:null,origins:[],extra:[]}));
   return base.concat(custom,staples);
 }
 

@@ -1,7 +1,7 @@
 /* VIEW · Pestaña «Compra»: la lista de la semana, ordenada por pasillos. */
 
 import { el, svg, ICON, linkBtn, note, switchBtn, showUndo } from "./dom.js";
-import { openIngredientSheet, openAisleSheet, openCloseSheet, openShareSheet } from "./sheets/shopSheets.js";
+import { openIngredientSheet, openAisleSheet, openCloseSheet, openShareSheet, openBreakfastSheet } from "./sheets/shopSheets.js";
 
 export function renderCompra(host,vm){
   const d=vm.compra();
@@ -86,6 +86,20 @@ export function renderCompra(host,vm){
 
   d.visibleSections.forEach(s=>host.append(section(s.label, s.done+" de "+s.rows.length, s.rows)));
   if(d.showOptionals && d.optionals.length) host.append(section("Opcionales","fuera del total",d.optionals," optionals"));
+
+  /* recordatorios de desayuno: por si falta algo; no cuentan en el total */
+  if(d.showOptionals){
+    const edit=linkBtn(d.breakfastCount ? "Editar" : "Añadir",()=>openBreakfastSheet(vm));
+    host.append(el("section",{className:"sec breakfast"},
+      el("div",{className:"sec-head"},
+        svg(ICON.cup,"2"),
+        el("h2",{text:"Para el desayuno"}),
+        el("span",{text:"si falta"}),
+        edit),
+      d.breakfast.map(row),
+      !d.breakfastCount ? el("p",{className:"hintline",style:{margin:"4px 0 0"},
+        text:"Apunta lo que sueles desayunar (pan, leche, café…) y te lo recordará cada semana."}) : null));
+  }
 
   /* añadir algo que no viene del menú: fijo abajo, al alcance del pulgar */
   const input=el("input",{type:"text",placeholder:"Añadir algo a la lista…","aria-label":"Añadir a la lista",enterkeyhint:"done"});

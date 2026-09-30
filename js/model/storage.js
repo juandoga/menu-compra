@@ -16,7 +16,8 @@ export const KEYS = {
   seen:    "menuCompraApp_firstSeen_v1",  /* desde cuándo se usa esta versión */
   snooze:  "menuCompraApp_backupSnooze_v1",/* «recuérdamelo luego» */
   staples: "menuCompraApp_staples_v1",    /* productos fijos: salen todas las semanas */
-  hideDone:"menuCompraApp_hideChecked_v1" /* ocultar lo ya comprado en la lista */
+  hideDone:"menuCompraApp_hideChecked_v1",/* ocultar lo ya comprado en la lista */
+  bfSeeded:"menuCompraApp_breakfastSeeded_v1" /* ya se crearon los recordatorios de desayuno */
 };
 
 /* Lo que entra en la copia de seguridad */

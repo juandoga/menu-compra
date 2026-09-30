@@ -4,14 +4,17 @@
 
 import * as store from "./storage.js";
 import { KEYS, BACKUP_KEYS } from "./storage.js";
-import { DEFAULT_MENU, defaultBreakfast } from "./defaultMenu.js";
+import { DEFAULT_MENU, DEFAULT_BREAKFAST } from "./defaultMenu.js";
 import { SECTIONS } from "./sections.js";
-import { clone } from "./text.js";
+import { clone, itemKey, norm, parseItem } from "./text.js";
 import { isoDate, mondayOf } from "./calendar.js";
 
 /* ---------- menú de 4 semanas ---------- */
 
-/* Menús guardados con versiones antiguas de la app: se pasan al formato actual (comida / cena) */
+/* Menús guardados con versiones antiguas de la app: se pasan al formato actual (comida / cena).
+   Los desayunos por día (sólo existieron el 30/9/2026) se quitan: ahora son recordatorios en la
+   lista de la compra. Lo que llevaban se apunta en «breakfastFound» para no perderlo. */
+let breakfastFound=[];
 function migrate(menu){
   return menu.map(week=>week.map((day,di)=>{
     if(!(day && Array.isArray(day.meals))){
@@ -22,10 +25,11 @@ function migrate(menu){
         {id:"cena",  name:"Cena",  dishes:ds.slice(-1)}
       ]};
     }
-    /* desde sept. 2026 cada día tiene también desayuno, el primero */
-    if(!day.meals.some(m=>m.id==="desayuno")){
-      day.meals.unshift({id:"desayuno",name:"Desayuno",dishes:[defaultBreakfast()]});
-    }
+    day.meals.filter(m=>m.id==="desayuno").forEach(m=>m.dishes.forEach(d=>d.ingredients.forEach(i=>{
+      const p=parseItem(i.item);
+      if(p.short) breakfastFound.push(p.hint ? p.short+" "+p.hint : p.short);
+    })));
+    day.meals=day.meals.filter(m=>m.id!=="desayuno");
     return day;
   }));
 }
@@ -40,6 +44,20 @@ function loadMenu(){
 }
 
 let MENU=loadMenu();
+seedBreakfast();
+
+/* La primera vez, crea los recordatorios de desayuno (con lo que llevaban tus desayunos, si había) */
+function seedBreakfast(){
+  if(store.get(KEYS.bfSeeded)!=null) return;
+  const seen=new Set(), names=[];
+  (breakfastFound.length ? breakfastFound : DEFAULT_BREAKFAST).forEach(n=>{
+    const k=itemKey(n); if(!seen.has(k)){ seen.add(k); names.push(n); }
+  });
+  const now=Date.now();
+  store.setJSON(KEYS.staples, staples().concat(names.map((n,i)=>(
+    {key:"fijo::"+(now+i)+"::"+norm(n), item:n, qty:null, unit:null, group:"desayuno"}))));
+  store.set(KEYS.bfSeeded,"1");
+}
 
 /* El menú se devuelve «vivo»: quien lo cambie debe llamar luego a saveMenu() */
 export function getMenu(){ return MENU; }
@@ -54,7 +72,13 @@ export function restoreMenuSnapshot(raw){
 /* ---------- lo marcado en la lista de cada semana ---------- */
 export function weekState(w){
   const s=store.getJSON(KEYS.week+w,null);
-  return s || {checked:{},overrides:{},removed:[],custom:[]};
+  if(!s) return {checked:{},overrides:{},removed:[],custom:[]};
+  /* lo guardado antes de agrupar por singular («patatas») pasa a la clave nueva («patata») */
+  const fix=k=>(/^(custom|fijo)::/.test(k) ? k : itemKey(k));
+  const remap=o=>{ const r={}; Object.keys(o||{}).forEach(k=>{ r[fix(k)]=o[k]; }); return r; };
+  s.checked=remap(s.checked); s.overrides=remap(s.overrides);
+  s.removed=[...new Set((s.removed||[]).map(fix))];
+  return s;
 }
 export function saveWeekState(w,s){ store.setJSON(KEYS.week+w, s); }
 

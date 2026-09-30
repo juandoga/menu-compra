@@ -19,7 +19,10 @@ export function openIngredientSheet(vm,key){
     unit.addEventListener("change",save);
     host.append(block("Cantidad a comprar",el("div",{className:"qtyrow"},qty,unit),i.note ? hintLine(i.note) : null));
 
-    if(i.staple){
+    if(i.breakfast){
+      host.append(block("Recordatorio de desayuno",
+        hintLine("Sale cada semana al final de la lista, por si se te acaba. No cuenta en el total de la compra.",{marginTop:"0"})));
+    }else if(i.staple){
       host.append(block("Producto fijo",
         hintLine("Sale en la lista todas las semanas. Al cerrar la compra vuelve a aparecer sin marcar.",{marginTop:"0"})));
     }else if(i.custom){
@@ -34,7 +37,13 @@ export function openIngredientSheet(vm,key){
     }
 
     const acts=el("div",{className:"sheet-actions"});
-    if(i.staple){
+    if(i.breakfast){
+      acts.append(el("button",{className:"textdanger",text:"Quitar de los desayunos",onClick:()=>{
+        const undo=vm.unStaple(i.key);
+        closeSheet();
+        showUndo(i.title+" quitado de los desayunos",undo);
+      }}));
+    }else if(i.staple){
       acts.append(
         el("button",{className:"btn ghost full",text:"Esta semana no",onClick:()=>{
           const undo=vm.removeItem(i.key);
@@ -53,6 +62,11 @@ export function openIngredientSheet(vm,key){
           closeSheet();
           showUndo(i.title+" saldrá todas las semanas",undo);
         }},svg(ICON.pin,"2"),"Comprar todas las semanas"));
+        acts.append(el("button",{className:"btn ghost full",onClick:()=>{
+          const undo=vm.makeStaple(i.key,"desayuno");
+          closeSheet();
+          showUndo(i.title+" pasa a los desayunos",undo);
+        }},svg(ICON.cup,"2"),"Recordármelo para el desayuno"));
       }else{
         acts.append(el("button",{className:"btn ghost full",text:i.basic?"Quitar de básicos":"Marcar como básico",
           onClick:()=>{ vm.toggleBasic(i.key); closeSheet(); }}));
@@ -138,5 +152,35 @@ export function openShareSheet(vm){
       el("div",{className:"switchrow"},el("span",{text:"Sólo lo que queda por comprar"}),sw),
       el("div",{className:"sheet-actions",style:{marginTop:"12px"}},copy,wa));
     paint();
+  });
+}
+
+/* --- recordatorios de desayuno: ver, añadir y quitar --- */
+export function openBreakfastSheet(vm){
+  openSheet(host=>{
+    sheetHeader(host,"Para el desayuno","Te lo recuerda cada semana al final de la lista");
+    const list=el("div");
+    const input=el("input",{className:"field",type:"text",placeholder:"Por ejemplo: leche, café, pan de molde","aria-label":"Añadir recordatorio"});
+    function draw(){
+      list.textContent="";
+      const items=vm.breakfastList();
+      items.forEach(b=>list.append(el("div",{className:"aisle"},
+        el("span",{className:"aisle-name",text:b.name}),
+        el("button",{className:"abtn","aria-label":"Quitar "+b.name,onClick:()=>{
+          const undo=vm.unStaple(b.key); draw();
+          showUndo(b.name+" quitado",()=>{ undo(); if(list.isConnected) draw(); });
+        }},svg(ICON.close,"2.2")))));
+      if(!items.length) list.append(hintLine("Aún no hay nada.",{margin:"0 0 8px"}));
+    }
+    const add=()=>{
+      if(!input.value.trim()){ input.focus(); return; }
+      vm.addBreakfast(input.value); input.value=""; draw(); input.focus();
+    };
+    input.addEventListener("keydown",e=>{ if(e.key==="Enter") add(); });
+    draw();
+    host.append(list,
+      el("div",{className:"addrow"},input,el("button",{className:"btn",text:"Añadir",onClick:add})),
+      el("div",{className:"sheet-actions",style:{marginTop:"14px"}},
+        el("button",{className:"btn ghost full",text:"Listo",onClick:closeSheet})));
   });
 }

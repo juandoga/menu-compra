@@ -46,8 +46,7 @@ export function renderHoy(host,vm){
       el("span",{className:"remind-k",text:"Para mañana"}),
       el("span",{className:"remind-v"},w.prep," ",el("small",{text:"· "+w.dish}))))));
 
-  /* un desayuno vacío no ocupa sitio en Hoy (se añade desde Semana) */
-  d.meals.filter(m=>!(m.kind==="desayuno" && !m.dishes.length)).forEach(meal=>host.append(mealCard(vm,meal)));
+  d.meals.forEach(meal=>host.append(mealCard(vm,meal)));
 
   const swap=linkBtn("",()=>openSwapSheet(vm,vm.todayIdx));
   swap.textContent="";

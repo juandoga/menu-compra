@@ -153,10 +153,13 @@ h1,h2,h3{margin:0;}
 }
 .meal.cena{--chip:var(--cena-chip);background:var(--cena);color:var(--on-cena);}
 .meal.libre{--chip:var(--libre-chip);background:var(--libre);color:var(--on-libre);}
-/* desayuno: menta, más pequeño; va primero y se repite casi igual cada día */
-.meal.desayuno{--chip:var(--desayuno-chip);background:var(--desayuno);color:var(--on-desayuno);padding:14px 16px 16px;gap:10px;border-radius:24px;}
-.meal.desayuno .dish-name{font-size:21px;}
-.meal.desayuno .edit-btn{margin-top:-8px;}
+/* recordatorios de desayuno en la lista */
+.sec.breakfast .sec-head{align-items:center;}
+.sec.breakfast .sec-head svg{width:20px;height:20px;flex:0 0 auto;}
+.sec.breakfast .sec-head h2{flex:0 1 auto;}
+.sec.breakfast .sec-head > span{flex:1;}
+.sec.breakfast .sec-head .linkbtn{min-height:36px;padding:0 4px;font-size:14px;}
+.sec.breakfast .row-name{color:var(--ink-soft);}
 .meal-head{display:flex;align-items:center;gap:8px;min-height:24px;}
 .meal-head svg{width:18px;height:18px;flex:0 0 auto;}
 .meal-label{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;}

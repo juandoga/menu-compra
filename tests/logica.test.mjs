@@ -31,21 +31,21 @@ function menuPrueba(){
 
 test("la lista junta unidades distintas sin perder ninguna", ()=>{
   const l=buildList(menuPrueba(),0,[]);
-  const ceb=l.find(i=>i.key==="cebollas");
+  const ceb=l.find(i=>i.key==="cebolla");
   assert.equal(itemQtyText(ceb),"2 ud + 150 g");
   assert.equal(l.find(i=>i.key==="queso").allOptional,true);
 });
 
 test("para 3 personas se escala; las unidades redondean hacia arriba", ()=>{
   const l=shopItems(menuPrueba(),0,vacio,3,[]);
-  assert.equal(itemQtyText(l.find(i=>i.key==="cebollas")),"3 ud + 225 g");
+  assert.equal(itemQtyText(l.find(i=>i.key==="cebolla")),"3 ud + 225 g");
   assert.equal(scaleQty(1,"lata",1.5),2);
   assert.equal(scaleQty(300,"g",1.5),450);
 });
 
 test("una cantidad puesta a mano manda sobre la calculada", ()=>{
-  const l=shopItems(menuPrueba(),0,{...vacio,overrides:{cebollas:5}},4,[]);
-  assert.equal(itemQtyText(l.find(i=>i.key==="cebollas")),"5 ud");
+  const l=shopItems(menuPrueba(),0,{...vacio,overrides:{cebolla:5}},4,[]);
+  assert.equal(itemQtyText(l.find(i=>i.key==="cebolla")),"5 ud");
 });
 
 test("cambiar lunes y martes mueve los platos pero no cambia la lista", ()=>{
@@ -53,8 +53,8 @@ test("cambiar lunes y martes mueve los platos pero no cambia la lista", ()=>{
   const v=viewWeek(m,0,[{a:0,b:1,meal:null}]);
   assert.equal(v[0][0].meal.dishes[0].name,"B");
   assert.equal(v[0][0].d,1); /* recuerda que viene del martes */
-  const antes=itemQtyText(buildList(m,0,[]).find(i=>i.key==="cebollas"));
-  const despues=itemQtyText(buildList(m,0,[{a:0,b:1,meal:null}]).find(i=>i.key==="cebollas"));
+  const antes=itemQtyText(buildList(m,0,[]).find(i=>i.key==="cebolla"));
+  const despues=itemQtyText(buildList(m,0,[{a:0,b:1,meal:null}]).find(i=>i.key==="cebolla"));
   assert.equal(antes,despues);
 });
 
@@ -115,9 +115,9 @@ test("ViewModel: marcar, cerrar la compra y deshacer", ()=>{
 test("la compra puede empezar en un día: lo de días pasados no cuenta", ()=>{
   const m=menuPrueba();
   const desdeMartes=buildList(m,0,[],1);
-  assert.equal(itemQtyText(desdeMartes.find(i=>i.key==="cebollas")),"150 g"); /* el lunes (2 ud) ya pasó */
+  assert.equal(itemQtyText(desdeMartes.find(i=>i.key==="cebolla")),"150 g"); /* el lunes (2 ud) ya pasó */
   const desdeMiercoles=buildList(m,0,[],2);
-  assert.equal(desdeMiercoles.find(i=>i.key==="cebollas"),undefined);
+  assert.equal(desdeMiercoles.find(i=>i.key==="cebolla"),undefined);
 });
 
 test("los productos fijos salen todas las semanas salvo «esta semana no»", async ()=>{
@@ -129,14 +129,17 @@ test("los productos fijos salen todas las semanas salvo «esta semana no»", asy
   assert.equal(sinEsta.find(i=>i.staple),undefined);
 });
 
-test("cada día tiene desayuno y no convierte en «básico» lo que lleva", async ()=>{
+test("los desayunos por día se quitan del menú y pasan a recordatorios de la compra", async ()=>{
   localStorage.clear();
-  const repo=await import("../js/model/repository.js");
-  repo.restoreMenuSnapshot(null);
-  const m=repo.getMenu();
-  assert.ok(m.every(w=>w.every(d=>d.meals[0].id==="desayuno" && d.meals[0].dishes.length===1)));
-  const { isBasic } = await import("../js/model/rules.js");
-  assert.equal(isBasic(m,{},"pan"),false); /* sale en todos los desayunos, pero no cuenta */
+  /* un menú guardado con desayunos, como los que hubo el 30/9/2026 */
+  const dia={meals:[
+    {id:"desayuno",name:"Desayuno",dishes:[{name:"Tostadas",ingredients:[{qty:null,unit:null,item:"pan (para tostar)"},{qty:null,unit:null,item:"aguacate"}]}]},
+    {id:"comida",name:"Comida",dishes:[]},{id:"cena",name:"Cena",dishes:[]}]};
+  localStorage.setItem("menuCompraApp_menuData_v1",JSON.stringify([0,1,2,3].map(()=>Array.from({length:7},()=>dia))));
+  const repo=await import("../js/model/repository.js?desayunos"); /* módulo nuevo: arranca como la app */
+  assert.ok(repo.getMenu().every(w=>w.every(d=>!d.meals.some(m=>m.id==="desayuno"))));
+  const bf=repo.staples().filter(x=>x.group==="desayuno").map(x=>x.item);
+  assert.deepEqual(bf,["pan para tostar","aguacate"]);
 });
 
 test("ViewModel: el miércoles la compra de esta semana no suma lunes ni martes", ()=>{
@@ -171,4 +174,15 @@ test("ViewModel: fijar un producto, cerrar la compra y ocultar lo comprado", ()=
   const c=vm.compra();
   assert.equal(c.hiddenDone,1);
   assert.ok(!c.visibleSections.flatMap(s=>s.rows).some(x=>x.key===r.key));
+});
+
+test("«patatas» y «patata» son el mismo producto en la lista", ()=>{
+  const dia=platos=>({meals:[{id:"comida",name:"Comida",dishes:platos}]});
+  const semana=Array.from({length:7},()=>dia([]));
+  semana[0]=dia([{name:"A",ingredients:[{qty:2,unit:"ud",item:"patatas"}]}]);
+  semana[1]=dia([{name:"B",ingredients:[{qty:1,unit:"ud",item:"patata"}]}]);
+  const l=buildList([semana,semana,semana,semana],0,[]);
+  const p=l.filter(i=>i.key==="patata");
+  assert.equal(p.length,1);
+  assert.equal(itemQtyText(p[0]),"3 ud");
 });
