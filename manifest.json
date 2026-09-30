@@ -33,5 +33,36 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "id": "/menu-compra/",
+  "lang": "es",
+  "categories": [
+    "food",
+    "lifestyle",
+    "productivity"
+  ],
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "screenshots/hoy.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Qué toca comer hoy"
+    },
+    {
+      "src": "screenshots/semana.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "El menú de la semana"
+    },
+    {
+      "src": "screenshots/compra.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "La lista de la compra"
+    }
   ]
 }

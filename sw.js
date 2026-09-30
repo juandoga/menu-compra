@@ -1,7 +1,7 @@
 /* Menuse — service worker: la app y la lista funcionan sin conexión.
    Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…).
    Si creas un archivo nuevo en js/ o css/, añádelo a la lista ASSETS. */
-const CACHE = "menuse-v8";
+const CACHE = "menuse-v9";
 const ASSETS = [
   "./",
   "./index.html",
@@ -19,6 +19,7 @@ const ASSETS = [
   "./js/view/dishBlock.js",
   "./js/view/dom.js",
   "./js/view/hoyView.js",
+  "./js/view/install.js",
   "./js/view/semanaView.js",
   "./js/view/sheets/dataSheet.js",
   "./js/view/sheets/dishSheet.js",

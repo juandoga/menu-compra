@@ -8,6 +8,7 @@ import { renderHoy } from "./view/hoyView.js";
 import { renderSemana } from "./view/semanaView.js";
 import { renderCompra } from "./view/compraView.js";
 import { openSettingsSheet } from "./view/sheets/settingsSheet.js";
+import "./view/install.js"; /* escucha desde el principio el aviso de «se puede instalar» */
 import { openWeekPicker } from "./view/sheets/weekSheets.js";
 
 const vm=createAppViewModel();

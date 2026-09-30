@@ -3,6 +3,7 @@
 
 import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme } from "../dom.js";
 import { openDataSheet } from "./dataSheet.js";
+import { isInstalled, canInstall, promptInstall, onInstallChange } from "../install.js";
 
 export function openSettingsSheet(vm){
   openSheet(host=>{
@@ -12,6 +13,17 @@ export function openSettingsSheet(vm){
       host.textContent="";
       const info=vm.seasonInfo();
       sheetHeader(host,"Ajustes");
+
+      /* --- instalar como app --- */
+      if(!isInstalled()){
+        host.append(block("App",
+          canInstall()
+            ? el("button",{className:"btn full",text:"Instalar Menuse como app",onClick:async()=>{
+                if(await promptInstall()) draw();
+              }})
+            : hintLine("Para instalarla como app: menú ⋮ de Chrome → «Instalar aplicación». Si sólo aparece «Añadir a pantalla de inicio», elige «Instalar», no «Crear acceso directo».",{marginTop:"0"}),
+          hintLine("Instalada sale en el cajón de aplicaciones, se abre a pantalla completa y conserva tu menú y tu lista.")));
+      }
 
       /* --- estación --- */
       const choices=[{id:"auto",label:"Automática"}].concat(info.seasons.map(s=>({id:s.id,label:s.label})));
@@ -71,5 +83,7 @@ export function openSettingsSheet(vm){
         el("button",{className:"btn full",text:"Listo",onClick:closeSheet})));
     }
     draw();
+    /* si Chrome avisa de que ya se puede instalar mientras el panel está abierto */
+    const off=onInstallChange(()=>{ if(host.isConnected) draw(); else off(); });
   });
 }
