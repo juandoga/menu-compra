@@ -139,6 +139,11 @@ export function defaultAisles(){ return SECTIONS.map(s=>s.id); }
 export function staples(){ const s=store.getJSON(KEYS.staples,[]); return Array.isArray(s) ? s : []; }
 export function saveStaples(list){ store.setJSON(KEYS.staples,list); }
 
+/* ---------- gasto: lo que costó cada compra ---------- */
+/* cada apunte: {id, date:"2026-10-13", amount:62.4, week:1} */
+export function spending(){ const s=store.getJSON(KEYS.spend,[]); return Array.isArray(s) ? s : []; }
+export function saveSpending(list){ store.setJSON(KEYS.spend,list); }
+
 /* ---------- ajustes ---------- */
 export function hideDone(){ return store.get(KEYS.hideDone)==="1"; }
 export function setHideDone(on){ store.set(KEYS.hideDone, on?"1":"0"); }
@@ -172,7 +177,7 @@ export function snoozeUntil(){ return parseInt(store.get(KEYS.snooze),10) || nul
 export function setSnooze(until){ store.set(KEYS.snooze,String(until)); }
 /* ¿Hay algo tuyo que merezca copia? (cambios en el menú, la lista, pasillos…) */
 export function hasOwnData(){
-  return [KEYS.menu,KEYS.basics,KEYS.aisles,KEYS.staples,KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3"]
+  return [KEYS.menu,KEYS.basics,KEYS.aisles,KEYS.staples,KEYS.spend,KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3"]
     .some(k=>store.get(k)!=null);
 }
 export function exportData(){

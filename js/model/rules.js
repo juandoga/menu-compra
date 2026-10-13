@@ -156,3 +156,25 @@ export function searchDishes(menu,query){
   });
   return hits;
 }
+
+/* ---------- gasto ---------- */
+/* «62,40» o «62.4» o «62 €» → 62.4 ; vacío o no válido → null */
+export function parseAmount(txt){
+  const t=String(txt||"").replace(/€/g,"").replace(/\s/g,"").replace(",",".");
+  if(!t) return null;
+  const n=Number(t);
+  return isFinite(n) && n>0 ? Math.round(n*100)/100 : null;
+}
+/* Agrupa los apuntes por mes, del más reciente al más antiguo:
+   [{month:"2026-10", total, count, entries:[…]}] */
+export function spendByMonth(list){
+  const map=new Map();
+  list.forEach(e=>{
+    const m=String(e.date).slice(0,7);
+    if(!map.has(m)) map.set(m,{month:m,total:0,count:0,entries:[]});
+    const g=map.get(m); g.total+=e.amount; g.count++; g.entries.push(e);
+  });
+  return [...map.values()].map(g=>({...g,total:Math.round(g.total*100)/100,
+    entries:g.entries.sort((a,b)=>b.date.localeCompare(a.date))}))
+    .sort((a,b)=>b.month.localeCompare(a.month));
+}

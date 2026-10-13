@@ -230,3 +230,33 @@ test("ViewModel: editar el menú de verano en otoño no cambia lo de hoy", ()=>{
   assert.equal(vm.hoy().meals[0].dishes[0].name,"Gazpacho");
   vm.setSeasonSetting("auto");
 });
+
+/* ---------- gasto ---------- */
+test("leer el importe: coma, punto, símbolo de euro", async ()=>{
+  const { parseAmount } = await import("../js/model/rules.js");
+  assert.equal(parseAmount("62,40"),62.4);
+  assert.equal(parseAmount("62.4 €"),62.4);
+  assert.equal(parseAmount(""),null);
+  assert.equal(parseAmount("abc"),null);
+  assert.equal(parseAmount("0"),null);
+});
+
+test("ViewModel: cerrar la compra con importe lo apunta por meses; deshacer lo quita", ()=>{
+  localStorage.clear();
+  let hoy=new Date(2026,8,28,12);
+  const vm=createAppViewModel(()=>hoy);
+  vm.setCurrentWeek(0);
+  vm.closeShopping(50);
+  hoy=new Date(2026,9,5,12);
+  vm.closeShopping(62.4);
+  const undo=vm.closeShopping(20);
+  vm.closeShopping(null); /* sin importe: no se apunta */
+  let s=vm.spendSummary();
+  assert.equal(s.thisMonth.total,82.4);
+  assert.equal(s.thisMonth.count,2);
+  assert.equal(s.avgPast,50);
+  assert.equal(s.months.length,2);
+  undo();
+  s=vm.spendSummary();
+  assert.equal(s.thisMonth.total,62.4);
+});

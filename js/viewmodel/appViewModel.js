@@ -318,6 +318,25 @@ export function createAppViewModel(now=()=>new Date()){
 
     backupJSON(){ return JSON.stringify(repo.exportData(),null,2); },
 
+    /* gasto: este mes y los anteriores */
+    spendSummary(){
+      const months=rules.spendByMonth(repo.spending());
+      const cur=isoDate(now()).slice(0,7);
+      const label=m=>{ const [y,mo]=m.split("-"); return cap(MONTHS[+mo-1])+(+y!==now().getFullYear()?" "+y:""); };
+      const thisMonth=months.find(m=>m.month===cur);
+      const past=months.filter(m=>m.month!==cur);
+      const avg = past.length ? Math.round(past.reduce((a,m)=>a+m.total,0)/past.length*100)/100 : null;
+      const max = Math.max(1,...months.map(m=>m.total));
+      return {
+        hasData: months.length>0,
+        thisMonth: {label:label(cur), total: thisMonth ? thisMonth.total : 0, count: thisMonth ? thisMonth.count : 0},
+        avgPast: avg, pastCount: past.length,
+        months: months.slice(0,12).map(m=>({month:m.month, label:label(m.month), total:m.total, count:m.count,
+          pct:Math.round(m.total/max*100), current:m.month===cur,
+          entries:m.entries.map(e=>{ const d=e.date.split("-"); return {id:e.id, amount:e.amount, label:(+d[2])+" "+MONTHS_SHORT[+d[1]-1]+" · semana "+e.week}; })}))
+      };
+    },
+
     /* panel de ajustes: estaciones */
     seasonInfo(){
       const setting=repo.seasonSetting(), cur=seasonNow(), live=liveMenuId();
@@ -497,17 +516,27 @@ export function createAppViewModel(now=()=>new Date()){
       notify();
       return ()=>{ repo.saveWeekState(w,before); notify(); };
     },
-    closeShopping(){
+    /* amount (opcional): lo que costó; se apunta en el registro de gasto */
+    closeShopping(amount){
       const w=st.week;
       let before;
       let beforeRemoved;
+      const beforeSpend=repo.spending();
+      if(amount!=null && amount>0){
+        repo.saveSpending(beforeSpend.concat([{id:"g"+Date.now(), date:isoDate(now()), amount, week:w+1}]));
+      }
       editWeekState(w,s=>{
         before=clone(s.checked); beforeRemoved=clone(s.removed||[]);
         s.checked={};
         s.removed=(s.removed||[]).filter(k=>!isStaple(k)); /* los fijos vuelven la próxima vez */
       });
       notify();
-      return ()=>{ editWeekState(w,s=>{ s.checked=before; s.removed=beforeRemoved; }); notify(); };
+      return ()=>{ editWeekState(w,s=>{ s.checked=before; s.removed=beforeRemoved; }); repo.saveSpending(beforeSpend); notify(); };
+    },
+    deleteSpend(id){
+      const before=repo.spending();
+      repo.saveSpending(before.filter(e=>e.id!==id)); notify();
+      return ()=>{ repo.saveSpending(before); notify(); };
     },
 
     /* --- editar platos --- */

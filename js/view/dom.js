@@ -156,3 +156,8 @@ export function applyTheme(t){
   if(t==="dark"||t==="light") document.documentElement.setAttribute("data-theme",t);
   else document.documentElement.removeAttribute("data-theme");
 }
+
+/* 62.4 → «62,40 €» */
+export function euros(n){
+  return Number(n||0).toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})+" €";
+}

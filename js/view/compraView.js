@@ -1,7 +1,7 @@
 /* VIEW · Pestaña «Compra»: la lista de la semana, ordenada por pasillos. */
 
-import { el, svg, ICON, linkBtn, note, switchBtn, showUndo } from "./dom.js";
-import { openIngredientSheet, openAisleSheet, openCloseSheet, openShareSheet, openBreakfastSheet } from "./sheets/shopSheets.js";
+import { el, svg, ICON, linkBtn, note, switchBtn, showUndo, euros } from "./dom.js";
+import { openIngredientSheet, openAisleSheet, openCloseSheet, openShareSheet, openBreakfastSheet, openSpendSheet } from "./sheets/shopSheets.js";
 
 export function renderCompra(host,vm){
   const d=vm.compra();
@@ -42,6 +42,14 @@ export function renderCompra(host,vm){
       el("span",{text:"Ocultar básicos de despensa"}),
       switchBtn("Ocultar básicos de despensa",d.hideBasics,()=>vm.toggleHideBasics())),
     el("button",{className:"pdone",text:"Compra hecha",onClick:()=>openCloseSheet(vm)})));
+
+  /* gasto del mes (si has apuntado alguna compra) */
+  const sp=vm.spendSummary();
+  if(sp.hasData){
+    host.append(el("button",{className:"spendline",onClick:()=>openSpendSheet(vm)},
+      el("span",null,"Gastado en "+sp.thisMonth.label.toLowerCase()+": ",el("b",{text:euros(sp.thisMonth.total)})),
+      el("span",{className:"spendline-more",text:"Ver meses"})));
+  }
 
   /* filtro por pasillo */
   if(d.filters.length>2){

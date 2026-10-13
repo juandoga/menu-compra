@@ -3,6 +3,7 @@
 
 import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme } from "../dom.js";
 import { openDataSheet } from "./dataSheet.js";
+import { openSpendSheet } from "./shopSheets.js";
 import { isInstalled, canInstall, promptInstall, onInstallChange } from "../install.js";
 
 export function openSettingsSheet(vm){
@@ -73,6 +74,10 @@ export function openSettingsSheet(vm){
         el("div",{className:"chips"},[{id:"auto",label:"Automática"},{id:"light",label:"Clara"},{id:"dark",label:"Oscura"}].map(t=>
           el("button",{text:t.label,"aria-pressed":th===t.id?"true":"false",
             onClick:()=>{ vm.setTheme(t.id); applyTheme(t.id); draw(); }})))));
+
+      /* --- gasto --- */
+      host.append(block("Gasto en la compra",
+        el("button",{className:"btn ghost full",text:"Ver el gasto por meses",onClick:()=>openSpendSheet(vm)})));
 
       /* --- copia de seguridad --- */
       host.append(block("Copia de seguridad",

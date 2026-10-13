@@ -1,7 +1,8 @@
 /* VIEW · Ventanas de la lista de la compra: ficha de un producto, orden de pasillos,
    «¿Compra hecha?» y compartir. */
 
-import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, switchBtn, showUndo, copyText } from "../dom.js";
+import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, switchBtn, showUndo, copyText, euros } from "../dom.js";
+import { parseAmount } from "../../model/rules.js";
 
 /* --- ficha de un producto --- */
 export function openIngredientSheet(vm,key){
@@ -120,14 +121,28 @@ export function openCloseSheet(vm){
       el("div",{style:{fontFamily:"var(--serif)",fontSize:"30px",fontWeight:"700",lineHeight:"1"}},
         String(s.done), el("span",{text:" de "+s.total,style:{fontSize:"16px",color:"var(--ink-faint)",fontWeight:"500"}})),
       hintLine(left)));
+    /* lo que ha costado (opcional): se apunta para ver el gasto de cada mes */
+    const amount=el("input",{className:"field money",type:"text",inputmode:"decimal",placeholder:"0,00",
+      "aria-label":"Lo que ha costado, en euros (opcional)"});
+    const warn=hintLine("");
+    host.append(block("¿Cuánto ha costado? (opcional)",
+      el("div",{className:"qtyrow"},amount,el("span",{className:"euro",text:"€"})),
+      warn,
+      hintLine("Se suma al gasto del mes. Puedes dejarlo vacío.")));
     host.append(el("p",{style:{fontSize:"13.5px",color:"var(--ink-soft)",lineHeight:"1.5",margin:"0 0 12px"},
       text:"Al cerrar se desmarca toda la lista y la semana queda lista para la próxima vez. Tus cantidades y los productos que añadiste se mantienen."}));
+    const close=()=>{
+      const txt=amount.value.trim();
+      const n=parseAmount(txt);
+      if(txt && n==null){ warn.textContent="Escribe sólo el número, por ejemplo 62,40."; warn.style.color="var(--accent-ink)"; amount.focus(); return; }
+      const undo=vm.closeShopping(n);
+      closeSheet();
+      showUndo(n!=null ? "Compra cerrada · "+euros(n)+" apuntados" : "Compra de la semana "+s.week+" cerrada",undo);
+    };
+    amount.addEventListener("keydown",e=>{ if(e.key==="Enter") close(); });
+    amount.addEventListener("input",()=>{ warn.textContent=""; });
     host.append(el("div",{className:"sheet-actions"},
-      el("button",{className:"btn full",text:"Cerrar la compra",onClick:()=>{
-        const undo=vm.closeShopping();
-        closeSheet();
-        showUndo("Compra de la semana "+s.week+" cerrada",undo);
-      }}),
+      el("button",{className:"btn full",text:"Cerrar la compra",onClick:close}),
       el("button",{className:"btn ghost full",text:"Seguir comprando",onClick:closeSheet})));
   });
 }
@@ -182,5 +197,44 @@ export function openBreakfastSheet(vm){
       el("div",{className:"addrow"},input,el("button",{className:"btn",text:"Añadir",onClick:add})),
       el("div",{className:"sheet-actions",style:{marginTop:"14px"}},
         el("button",{className:"btn ghost full",text:"Listo",onClick:closeSheet})));
+  });
+}
+
+/* --- gasto por meses --- */
+export function openSpendSheet(vm){
+  openSheet(host=>{
+    let open=null; /* mes desplegado */
+    function draw(){
+      host.textContent="";
+      const d=vm.spendSummary();
+      sheetHeader(host,"Gasto en la compra","Lo que apuntas al cerrar cada compra");
+      host.append(el("div",{className:"spend-top"},
+        el("span",{className:"spend-k",text:d.thisMonth.label}),
+        el("b",{className:"spend-big",text:euros(d.thisMonth.total)}),
+        el("span",{className:"spend-sub",text:d.thisMonth.count+(d.thisMonth.count===1?" compra":" compras")+
+          (d.avgPast!=null ? " · media de meses anteriores: "+euros(d.avgPast) : "")})));
+      if(!d.hasData){
+        host.append(hintLine("Aún no hay nada apuntado. Al pulsar «Compra hecha» puedes escribir lo que te ha costado."));
+      }else{
+        host.append(block("Por meses",d.months.map(m=>{
+          const row=el("button",{className:"mrow","aria-expanded":open===m.month?"true":"false",
+            onClick:()=>{ open = open===m.month ? null : m.month; draw(); }},
+            el("span",{className:"mrow-l",text:m.label}),
+            el("span",{className:"mbar"},el("i",{style:{width:m.pct+"%"},className:m.current?"cur":""})),
+            el("b",{className:"mrow-v",text:euros(m.total)}));
+          const wrap=el("div",null,row);
+          if(open===m.month) wrap.append(el("div",{className:"mdetail"},m.entries.map(e=>el("div",{className:"aisle"},
+            el("span",{className:"aisle-name",text:e.label}),
+            el("b",{text:euros(e.amount)}),
+            el("button",{className:"abtn","aria-label":"Borrar este apunte",onClick:()=>{
+              const undo=vm.deleteSpend(e.id); draw();
+              showUndo("Apunte borrado",()=>{ undo(); if(host.isConnected) draw(); });
+            }},svg(ICON.close,"2.2"))))));
+          return wrap;
+        }),hintLine("Toca un mes para ver cada compra o borrar un apunte equivocado.")));
+      }
+      host.append(el("div",{className:"sheet-actions"},el("button",{className:"btn full",text:"Listo",onClick:closeSheet})));
+    }
+    draw();
   });
 }
