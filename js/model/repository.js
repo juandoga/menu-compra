@@ -145,6 +145,8 @@ export function spending(){ const s=store.getJSON(KEYS.spend,[]); return Array.i
 export function saveSpending(list){ store.setJSON(KEYS.spend,list); }
 
 /* ---------- ajustes ---------- */
+export function notifyOn(){ return store.get(KEYS.notify)==="1"; }
+export function setNotifyOn(on){ store.set(KEYS.notify, on?"1":"0"); }
 export function hideDone(){ return store.get(KEYS.hideDone)==="1"; }
 export function setHideDone(on){ store.set(KEYS.hideDone, on?"1":"0"); }
 export function cycleStart(){ return store.get(KEYS.start); }

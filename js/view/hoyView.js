@@ -5,6 +5,7 @@ import { el, svg, ICON, linkBtn, pick4, note } from "./dom.js";
 import { mealCard } from "./dishBlock.js";
 import { openSwapSheet, openWeekSheet } from "./sheets/weekSheets.js";
 import { backupNote } from "./sheets/dataSheet.js";
+import { notifySupported, enableNotifications } from "./notify.js";
 
 export function renderHoy(host,vm){
   const d=vm.hoy();
@@ -38,6 +39,18 @@ export function renderHoy(host,vm){
 
   const bn=backupNote(vm);
   if(bn) host.append(bn);
+
+  /* congelador: lo de mañana que hay que sacar hoy */
+  if(d.thaw.length){
+    const ask = notifySupported() && !d.notify.on
+      ? linkBtn("Avisarme también en el móvil",async()=>{ const r=await enableNotifications(vm); if(r) vm.setNotifyOn(true); }) : null;
+    host.append(el("div",{className:"remind thaw"},
+      el("span",{className:"remind-ico"},svg(ICON.snow,"2")),
+      el("span",{style:{minWidth:"0",flex:"1"}},
+        el("span",{className:"remind-k",text:"Saca hoy del congelador"}),
+        d.thaw.map(t=>el("span",{className:"remind-v"},t.item," ",el("small",{text:"· "+t.meal+" de mañana"}))),
+        ask)));
+  }
 
   /* lo que hay que preparar hoy para mañana */
   d.warnings.forEach(w=>host.append(el("div",{className:"remind"},

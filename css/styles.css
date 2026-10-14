@@ -449,6 +449,17 @@ a.btn{display:flex;align-items:center;justify-content:center;}
 .abtn svg{width:16px;height:16px;}
 .abtn[disabled]{opacity:.3;cursor:default;}
 
+/* ---------- congelador ---------- */
+.ichip svg{width:13px;height:13px;vertical-align:-2px;margin-right:4px;}
+.ichip.frozen{box-shadow:inset 0 0 0 1.5px #3E7CB1;}
+.ice-btn{flex:0 0 auto;width:44px;height:44px;border-radius:12px;border:1.5px solid var(--line-strong);background:var(--paper);
+  color:var(--ink-soft);display:grid;place-items:center;padding:0;}
+.ice-btn svg{width:20px;height:20px;}
+.ice-btn[aria-pressed="true"]{background:#3E7CB1;border-color:#3E7CB1;color:#FFFFFF;}
+.remind.thaw .remind-ico{background:#3E7CB1;color:#FFFFFF;}
+.remind.thaw .linkbtn{color:inherit;min-height:36px;padding:0;margin-top:4px;font-size:13.5px;}
+.remind.thaw .remind-v + .remind-v{margin-top:2px;}
+
 /* ---------- gasto ---------- */
 .money{font-family:var(--display);font-size:22px;font-weight:700;}
 .euro{font-family:var(--display);font-size:22px;font-weight:700;color:var(--ink-soft);}

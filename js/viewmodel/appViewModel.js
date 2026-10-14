@@ -103,7 +103,7 @@ export function createAppViewModel(now=()=>new Date()){
       prep: dish.prep && String(dish.prep).trim() ? dish.prep : null,
       ingredients:dish.ingredients.map(i=>{
         const p=parseItem(i.item);
-        return {qty:qtyText(i.qty,i.unit), name:cap(p.short), hint:p.hint, optional:p.optional, basic:isBasic(p.short)};
+        return {qty:qtyText(i.qty,i.unit), name:cap(p.short), hint:p.hint, optional:p.optional, basic:isBasic(p.short), frozen:!!i.frozen};
       })
     };
   }
@@ -146,6 +146,9 @@ export function createAppViewModel(now=()=>new Date()){
         browsingOther: st.curWeek!=null && st.week!==st.curWeek ? {week:st.week+1, current:st.curWeek+1} : null,
         weekend: st.todayIdx>=5,
         warnings,
+        /* lo de mañana que está en el congelador: hay que sacarlo hoy */
+        thaw: rules.frozenIn(tomorrow).map(x=>({item:cap(x.item), dish:x.dish, meal:x.meal.toLowerCase()})),
+        notify: {on:repo.notifyOn()},
         meals: vw[st.todayIdx].map(r=>mealVM(r,st.todayIdx)),
         canChangeWeek: st.curWeek!=null,
         dayName: dayName(st.todayIdx),
@@ -281,7 +284,7 @@ export function createAppViewModel(now=()=>new Date()){
         subtitle:dayName(sd)+" · "+meal.name+" · Semana "+(st.week+1),
         kind:mealKind(meal),
         name:dish.name,
-        ingredients:dish.ingredients.map(i=>({item:i.item, qty:i.qty!=null?i.qty:"", unit:i.unit||""})),
+        ingredients:dish.ingredients.map(i=>({item:i.item, qty:i.qty!=null?i.qty:"", unit:i.unit||"", frozen:!!i.frozen})),
         prep:dish.prep||"", prepWarn:dish.prepWarn!==false
       };
     },
@@ -317,6 +320,30 @@ export function createAppViewModel(now=()=>new Date()){
     },
 
     backupJSON(){ return JSON.stringify(repo.exportData(),null,2); },
+
+    /* avisos del congelador: qué sacar cada uno de los próximos 7 días.
+       [{date:"2026-10-14", items:["Merluza"], text:"Merluza (cena de mañana)"}] — lo usa el aviso del móvil */
+    thawPlan(){
+      const start=repo.cycleStart();
+      if(!start) return [];
+      const live=liveMenuId(), prev=repo.activeMenuId();
+      repo.useMenu(live);
+      const out=[];
+      for(let i=0;i<7;i++){
+        const day=new Date(now().getFullYear(),now().getMonth(),now().getDate()+i);
+        const next=new Date(day.getFullYear(),day.getMonth(),day.getDate()+1);
+        const w=cycleWeekOn(next,start), di=weekdayIndex(next);
+        const swaps = (i===0 || di>st.todayIdx) && w===st.curWeek ? swapsFor(w) : [];
+        const items=rules.frozenIn(rules.viewWeek(menu(),w,swaps)[di]);
+        if(items.length) out.push({date:isoDate(day),
+          items:items.map(x=>cap(x.item)),
+          text:items.map(x=>cap(x.item)+" ("+x.meal.toLowerCase()+" de mañana)").join(", ")});
+      }
+      repo.useMenu(prev);
+      return out;
+    },
+    notifyOn(){ return repo.notifyOn(); },
+    setNotifyOn(on){ repo.setNotifyOn(on); notify(); },
 
     /* gasto: este mes y los anteriores */
     spendSummary(){
@@ -546,6 +573,11 @@ export function createAppViewModel(now=()=>new Date()){
       if(field==="item") row.item=value;
       else if(field==="qty") row.qty = String(value).trim()==="" ? null : parseFloat(value);
       else if(field==="unit") row.unit=String(value).trim()||null;
+      repo.saveMenu(); notify();
+    },
+    toggleFrozen(ref,idx){
+      const row=dishAt(ref).ingredients[idx];
+      if(row.frozen) delete row.frozen; else row.frozen=true;
       repo.saveMenu(); notify();
     },
     addIngredient(ref){ dishAt(ref).ingredients.push({qty:null,unit:null,item:""}); repo.saveMenu(); notify(); },

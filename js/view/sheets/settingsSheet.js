@@ -1,9 +1,10 @@
 /* VIEW · Panel de ajustes: estación, menús por estación, tema y copia de seguridad.
    Está detrás del botón de la cabecera; son cosas que se tocan poco. */
 
-import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme } from "../dom.js";
+import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme, switchBtn } from "../dom.js";
 import { openDataSheet } from "./dataSheet.js";
 import { openSpendSheet } from "./shopSheets.js";
+import { notifySupported, permission, enableNotifications, backgroundSupported, publishPlan, testNotification } from "../notify.js";
 import { isInstalled, canInstall, promptInstall, onInstallChange } from "../install.js";
 
 export function openSettingsSheet(vm){
@@ -74,6 +75,28 @@ export function openSettingsSheet(vm){
         el("div",{className:"chips"},[{id:"auto",label:"Automática"},{id:"light",label:"Clara"},{id:"dark",label:"Oscura"}].map(t=>
           el("button",{text:t.label,"aria-pressed":th===t.id?"true":"false",
             onClick:()=>{ vm.setTheme(t.id); applyTheme(t.id); draw(); }})))));
+
+      /* --- avisos del congelador --- */
+      if(notifySupported()){
+        const on=vm.notifyOn() && permission()==="granted";
+        const status=el("p",{className:"hintline",style:{marginTop:"8px"}});
+        const sw=switchBtn("Avisos del congelador en el móvil",on,async()=>{
+          if(on){ vm.setNotifyOn(false); await publishPlan(vm); draw(); return; }
+          const ok=await enableNotifications(vm);
+          if(ok){ vm.setNotifyOn(true); testNotification(); }
+          else if(permission()==="denied") status.textContent="El móvil tiene bloqueadas las notificaciones de Menuse. Actívalas en Ajustes del móvil → Aplicaciones → Menuse → Notificaciones.";
+          draw();
+        });
+        host.append(block("Avisos del congelador",
+          el("div",{className:"switchrow",style:{paddingTop:"0"}},el("span",{text:"Avisarme en el móvil la víspera"}),sw),
+          status,
+          hintLine("Marca con el copo ❄ los ingredientes que tengas congelados (en el editor de cada plato). La víspera sale el aviso en Hoy y, si lo activas, también como notificación.")));
+        if(on) backgroundSupported().then(ok=>{
+          status.textContent = ok
+            ? "Activados. El móvil revisa la app un par de veces al día, así que el aviso llega a lo largo del día (desde las 8:00), no a una hora exacta."
+            : "Activados, pero este móvil sólo deja avisar con la app instalada (Ajustes → App) y con Chrome. Mientras tanto lo verás al abrir la app, en Hoy.";
+        });
+      }
 
       /* --- gasto --- */
       host.append(block("Gasto en la compra",

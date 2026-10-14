@@ -9,6 +9,7 @@ import { renderSemana } from "./view/semanaView.js";
 import { renderCompra } from "./view/compraView.js";
 import { openSettingsSheet } from "./view/sheets/settingsSheet.js";
 import "./view/install.js"; /* escucha desde el principio el aviso de «se puede instalar» */
+import { publishPlan } from "./view/notify.js";
 import { openWeekPicker } from "./view/sheets/weekSheets.js";
 
 const vm=createAppViewModel();
@@ -54,6 +55,9 @@ function render(){
   if(lastView!==vm.view){ window.scrollTo(0,0); lastView=vm.view; }
 }
 vm.subscribe(render);
+/* cada vez que cambia algo, se actualiza el plan de avisos del congelador (para el service worker) */
+let planTimer=null;
+vm.subscribe(()=>{ clearTimeout(planTimer); planTimer=setTimeout(()=>publishPlan(vm),800); });
 
 /* ---------- carcasa ---------- */
 for(const k in views) views[k].tab.addEventListener("click",()=>vm.setView(k));
@@ -91,3 +95,4 @@ if("serviceWorker" in navigator && location.protocol==="https:"){
 }
 
 vm.setView("hoy");
+publishPlan(vm);

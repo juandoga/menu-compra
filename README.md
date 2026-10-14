@@ -66,3 +66,13 @@ Al final debe poner `fail 0`.
 
 Si cambias `sw.js`, sube el número de `CACHE` (`menuse-v3` → `menuse-v4`).
 Si creas un archivo nuevo en `js/` o `css/`, añádelo a la lista `ASSETS` de `sw.js`.
+
+## Pendiente
+
+- **Importar un menú desde Excel.** Viable sin servidor (librería que lee .xlsx en el navegador).
+  Idea: la app da una plantilla (*Semana · Día · Comida/Cena · Plato · Ingredientes*, ingredientes
+  separados por comas: «300 g pescado blanco, 2 ud patatas»), se rellena en Excel y se sube desde
+  Ajustes para el menú general o una estación. Antes de sustituir nada, mostrar un resumen
+  («28 días leídos, 3 filas con dudas»).
+- **Menú compartido entre varias personas de la casa** (ver conversación de octubre 2026):
+  necesita un servidor pequeño para sincronizar.

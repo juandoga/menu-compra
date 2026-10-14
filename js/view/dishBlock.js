@@ -25,7 +25,8 @@ function dishBlock(vm,dish){
       el("h2",{className:"dish-name",text:dish.name}),
       el("button",{className:"edit-btn","aria-label":"Editar "+dish.name,onClick:()=>openDishSheet(vm,dish.ref)},svg(ICON.pencil,"2"))),
     dish.ingredients.length ? el("ul",{className:"ichips"},dish.ingredients.map(i=>
-      el("li",{className:"ichip"+(i.optional?" opt":i.basic?" basic":"")},
+      el("li",{className:"ichip"+(i.optional?" opt":i.basic?" basic":"")+(i.frozen?" frozen":"")},
+        i.frozen ? svg(ICON.snow,"2") : null,
         i.qty ? el("b",{text:i.qty}) : null,
         i.qty ? " " : null,
         i.name.toLowerCase(),

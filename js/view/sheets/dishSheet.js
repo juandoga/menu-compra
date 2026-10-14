@@ -30,9 +30,16 @@ export function openDishSheet(vm,ref){
           drawIngredients();
           showUndo("Ingrediente quitado",()=>{ undo(); if(list.isConnected) drawIngredients(); });
         }},svg(ICON.close,"2.2"));
+        /* copo: «lo tengo congelado» → avisa la víspera para sacarlo */
+        const ice=el("button",{className:"ice-btn","aria-pressed":row.frozen?"true":"false",
+          "aria-label":(row.frozen?"Quitar marca de congelado: ":"Marcar como congelado: ")+(row.item||"ingrediente"),
+          title:"Lo tengo congelado",onClick:()=>{
+            vm.toggleFrozen(ref,idx);
+            ice.setAttribute("aria-pressed",vm.dish(ref).ingredients[idx].frozen?"true":"false");
+          }},svg(ICON.snow,"2"));
         list.append(el("div",{className:"ed-ing"},
           el("div",{className:"ed-top"},item,x),
-          el("div",{className:"ed-bot"},qty,unit)));
+          el("div",{className:"ed-bot"},qty,unit,ice)));
       });
       if(!ings.length) list.append(hintLine("Este plato aún no tiene ingredientes.",{marginTop:"0"}));
     }
@@ -43,7 +50,7 @@ export function openDishSheet(vm,ref){
       if(inputs.length>=2) inputs[inputs.length-2].focus();
     }});
     host.append(block("Ingredientes",list,addIng,
-      hintLine("Lo que pongas entre paréntesis se muestra como detalle. «(opcional)» deja el producto fuera del total de la compra.")));
+      hintLine("Lo que pongas entre paréntesis se muestra como detalle. «(opcional)» deja el producto fuera del total de la compra. Con el copo marcas lo que tienes congelado: la víspera te avisa para sacarlo.")));
 
     /* preparación previa y aviso la víspera */
     const prep=el("input",{className:"field",type:"text",placeholder:"Sacar el pescado del congelador",value:d.prep});

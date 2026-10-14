@@ -260,3 +260,24 @@ test("ViewModel: cerrar la compra con importe lo apunta por meses; deshacer lo q
   s=vm.spendSummary();
   assert.equal(s.thisMonth.total,62.4);
 });
+
+/* ---------- congelador ---------- */
+test("ViewModel: lo congelado de mañana sale hoy para sacarlo, y en el plan de avisos", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,9,13,9)); /* martes */
+  vm.setCurrentWeek(0);
+  vm.selectWeek(0);
+  const manana=vm.semana()[2];             /* miércoles */
+  const ref=manana.meals[0].dishes[0].ref;
+  vm.toggleFrozen(ref,0);
+  const nombre=vm.dish(ref).ingredients[0].item;
+  assert.equal(vm.dish(ref).ingredients[0].frozen,true);
+  const thaw=vm.hoy().thaw;
+  assert.equal(thaw.length,1);
+  const plan=vm.thawPlan();
+  assert.equal(plan[0].date,"2026-10-13");
+  assert.equal(plan[0].items.length,1);
+  vm.toggleFrozen(ref,0);                   /* quitar la marca */
+  assert.equal(vm.hoy().thaw.length,0);
+  assert.ok(nombre.length>0);
+});

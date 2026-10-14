@@ -19,14 +19,15 @@ export const KEYS = {
   hideDone:"menuCompraApp_hideChecked_v1",/* ocultar lo ya comprado en la lista */
   bfSeeded:"menuCompraApp_breakfastSeeded_v1", /* ya se crearon los recordatorios de desayuno */
   season:  "menuCompraApp_season_v1",
-  spend:   "menuCompraApp_spending_v1",   /* lo que costó cada compra */     /* estación: "auto" o fija (primavera, verano…) */
+  spend:   "menuCompraApp_spending_v1",   /* lo que costó cada compra */
+  notify:  "menuCompraApp_notify_v1",     /* avisos del congelador en el móvil: "1" activados */     /* estación: "auto" o fija (primavera, verano…) */
   seasonMenu:"menuCompraApp_menu_"        /* + estación: el menú propio de esa estación */
 };
 const SEASON_IDS=["primavera","verano","otono","invierno"];
 
 /* Lo que entra en la copia de seguridad */
 export const BACKUP_KEYS = [KEYS.menu,KEYS.basics,KEYS.hide,KEYS.theme,KEYS.aisles,KEYS.start,KEYS.people,KEYS.staples,KEYS.hideDone,
-  KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3",KEYS.season,KEYS.spend]
+  KEYS.week+"0",KEYS.week+"1",KEYS.week+"2",KEYS.week+"3",KEYS.season,KEYS.spend,KEYS.notify]
   /* menús por estación y lo marcado en cada una de sus semanas */
   .concat(...SEASON_IDS.map(s=>[KEYS.seasonMenu+s].concat([0,1,2,3].map(w=>KEYS.week+s+"_"+w))));
 

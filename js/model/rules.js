@@ -178,3 +178,13 @@ export function spendByMonth(list){
     entries:g.entries.sort((a,b)=>b.date.localeCompare(a.date))}))
     .sort((a,b)=>b.month.localeCompare(a.month));
 }
+
+/* ---------- congelador ---------- */
+/* Ingredientes marcados como congelados en una lista de comidas (las de un día) */
+export function frozenIn(refs){
+  const out=[];
+  refs.forEach(({meal})=>meal.dishes.forEach(d=>d.ingredients.forEach(i=>{
+    if(i.frozen){ const p=parseItem(i.item); if(p.short) out.push({item:p.short, dish:d.name, meal:meal.name}); }
+  })));
+  return out;
+}

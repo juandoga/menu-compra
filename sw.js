@@ -1,7 +1,8 @@
 /* Menuse — service worker: la app y la lista funcionan sin conexión.
    Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…).
    Si creas un archivo nuevo en js/ o css/, añádelo a la lista ASSETS. */
-const CACHE = "menuse-v10";
+const CACHE = "menuse-v11";
+const PLAN_CACHE = "menuse-avisos";   /* plan de avisos del congelador (lo escribe la app) */
 const ASSETS = [
   "./",
   "./index.html",
@@ -20,6 +21,7 @@ const ASSETS = [
   "./js/view/dom.js",
   "./js/view/hoyView.js",
   "./js/view/install.js",
+  "./js/view/notify.js",
   "./js/view/semanaView.js",
   "./js/view/sheets/dataSheet.js",
   "./js/view/sheets/dishSheet.js",
@@ -53,7 +55,7 @@ self.addEventListener("install", e => {
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== PLAN_CACHE).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -97,4 +99,40 @@ self.addEventListener("fetch", e => {
   e.respondWith(
     caches.match(req).then(hit => hit || fetch(req).then(res => keep(req, res)))
   );
+});
+
+/* ---------- avisos del congelador ---------- */
+/* Android despierta la app de vez en cuando (periodic background sync). Si hoy toca sacar algo
+   del congelador y aún no se ha avisado, se muestra la notificación. */
+function hoyISO() {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+}
+async function avisoCongelador() {
+  const c = await caches.open(PLAN_CACHE);
+  const r = await c.match("./__avisos.json");
+  if (!r) return;
+  const data = await r.json().catch(() => null);
+  if (!data || !data.on) return;
+  const today = hoyISO();
+  const entry = (data.plan || []).find(p => p.date === today);
+  if (!entry) return;
+  if (new Date().getHours() < 8) return;              /* de noche no */
+  const shown = await c.match("./__avisos-mostrado");
+  if (shown && (await shown.text()) === today) return; /* ya avisado hoy */
+  await self.registration.showNotification("Saca hoy del congelador", {
+    body: entry.text, icon: "icon-192.png", badge: "icon-192.png", tag: "congelador-" + today
+  });
+  await c.put("./__avisos-mostrado", new Response(today));
+}
+self.addEventListener("periodicsync", e => {
+  if (e.tag === "congelador") e.waitUntil(avisoCongelador());
+});
+/* Al tocar la notificación, abre la app */
+self.addEventListener("notificationclick", e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({ type: "window" }).then(cs => {
+    if (cs.length) return cs[0].focus();
+    return self.clients.openWindow("./index.html");
+  }));
 });
