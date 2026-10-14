@@ -120,13 +120,13 @@ test("la compra puede empezar en un día: lo de días pasados no cuenta", ()=>{
   assert.equal(desdeMiercoles.find(i=>i.key==="cebolla"),undefined);
 });
 
-test("los productos fijos salen todas las semanas salvo «esta semana no»", async ()=>{
+test("los productos fijos salen siempre, aunque antes se quitaran «esta semana»", async ()=>{
   const { shopItems } = await import("../js/model/rules.js");
   const fijos=[{key:"fijo::1::bolsas de basura",item:"bolsas de basura",qty:null,unit:null}];
   const l=shopItems(menuPrueba(),2,vacio,2,[],{staples:fijos});
   assert.ok(l.find(i=>i.key==="fijo::1::bolsas de basura" && i.staple));
   const sinEsta=shopItems(menuPrueba(),2,{...vacio,removed:["fijo::1::bolsas de basura"]},2,[],{staples:fijos});
-  assert.equal(sinEsta.find(i=>i.staple),undefined);
+  assert.ok(sinEsta.find(i=>i.staple)); /* lo quitado con la versión anterior vuelve a salir */
 });
 
 test("los desayunos por día se quitan del menú y pasan a recordatorios de la compra", async ()=>{
@@ -163,10 +163,12 @@ test("ViewModel: fijar un producto, cerrar la compra y ocultar lo comprado", ()=
   vm.makeStaple(key);
   const fijo=vm.compra().sections.find(s=>s.id==="hogar").rows[0];
   assert.equal(fijo.tag,"siempre");
-  vm.removeItem(fijo.key); /* «esta semana no» */
-  assert.equal(vm.compra().sections.find(s=>s.id==="hogar"),undefined);
-  vm.closeShopping(); /* la semana siguiente vuelve */
-  assert.ok(vm.compra().sections.find(s=>s.id==="hogar"));
+  /* si esta semana no hace falta, se tacha: sigue en la lista */
+  vm.toggleChecked(fijo.key);
+  assert.equal(vm.compra().sections.find(s=>s.id==="hogar").rows[0].checked,true);
+  vm.closeShopping(); /* al cerrar la compra vuelve sin tachar */
+  assert.equal(vm.compra().sections.find(s=>s.id==="hogar").rows[0].checked,false);
+  vm.toggleHideDone(); vm.toggleHideDone();
   /* ocultar comprados */
   const r=vm.compra().visibleSections[0].rows[0];
   vm.toggleChecked(r.key);

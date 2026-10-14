@@ -234,7 +234,7 @@ export function createAppViewModel(now=()=>new Date()){
         if(!i.overridden && people()!==rules.BASE_PEOPLE) note+=" Ya está calculada para "+people()+" personas.";
       }
       if(i.staple) note = i.breakfast ? "Recordatorio para el desayuno: no cuenta en el total. Márcalo sólo si te hace falta."
-                                     : "Sale en la lista todas las semanas. Si esta semana no lo necesitas, quítalo sólo de esta semana.";
+                                     : "Sale siempre en la lista. Si esta semana no lo necesitas, táchalo.";
       return {
         key:i.key, custom:i.custom, staple:!!i.staple, breakfast:!!i.breakfast, title:cap(i.item),
         subtitle:sectionLabel(sectionFor(i.item))+" · Semana "+(st.week+1),

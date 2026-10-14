@@ -128,8 +128,8 @@ export function shopItems(menu,w,state,people,swaps,opts={}){
     }
   });
   const custom=(state.custom||[]).map(c=>({...c,custom:true,allOptional:false,hint:null,origins:[],extra:[]}));
-  /* fijos: salen todas las semanas, salvo que digas «esta semana no» (queda en removed) */
-  const staples=(opts.staples||[]).filter(x=>!state.removed.includes(x.key))
+  /* fijos: salen siempre, todas las semanas (si una semana no hace falta, se tacha) */
+  const staples=(opts.staples||[])
     .map(x=>({...x,custom:true,staple:true,breakfast:x.group==="desayuno",allOptional:false,hint:null,origins:[],extra:[]}));
   return base.concat(custom,staples);
 }

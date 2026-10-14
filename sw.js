@@ -1,7 +1,7 @@
 /* Menuse — service worker: la app y la lista funcionan sin conexión.
    Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…).
    Si creas un archivo nuevo en js/ o css/, añádelo a la lista ASSETS. */
-const CACHE = "menuse-v11";
+const CACHE = "menuse-v12";
 const PLAN_CACHE = "menuse-avisos";   /* plan de avisos del congelador (lo escribe la app) */
 const ASSETS = [
   "./",

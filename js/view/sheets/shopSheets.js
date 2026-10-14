@@ -25,7 +25,7 @@ export function openIngredientSheet(vm,key){
         hintLine("Sale cada semana al final de la lista, por si se te acaba. No cuenta en el total de la compra.",{marginTop:"0"})));
     }else if(i.staple){
       host.append(block("Producto fijo",
-        hintLine("Sale en la lista todas las semanas. Al cerrar la compra vuelve a aparecer sin marcar.",{marginTop:"0"})));
+        hintLine("Sale siempre en la lista. Si una semana no lo necesitas, táchalo como lo demás. Al cerrar la compra vuelve a aparecer sin tachar.",{marginTop:"0"})));
     }else if(i.custom){
       host.append(block("Añadido por ti",
         hintLine("Lo añadiste tú a la lista de esta semana. Si lo compras a menudo (bolsas de basura, lavavajillas…), fíjalo y saldrá todas las semanas.",{marginTop:"0"})));
@@ -46,11 +46,6 @@ export function openIngredientSheet(vm,key){
       }}));
     }else if(i.staple){
       acts.append(
-        el("button",{className:"btn ghost full",text:"Esta semana no",onClick:()=>{
-          const undo=vm.removeItem(i.key);
-          closeSheet();
-          showUndo(i.title+" quitado sólo esta semana",undo);
-        }}),
         el("button",{className:"textdanger",text:"Dejar de comprarlo siempre",onClick:()=>{
           const undo=vm.unStaple(i.key);
           closeSheet();
