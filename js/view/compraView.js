@@ -3,6 +3,9 @@
 import { el, svg, ICON, linkBtn, note, switchBtn, showUndo, euros } from "./dom.js";
 import { openIngredientSheet, openAisleSheet, openCloseSheet, openShareSheet, openBreakfastSheet, openSpendSheet } from "./sheets/shopSheets.js";
 
+/* «Una vez» o «Siempre» al añadir: se recuerda mientras la app está abierta */
+let addForever=false;
+
 export function renderCompra(host,vm){
   const d=vm.compra();
   host.textContent="";
@@ -85,7 +88,7 @@ export function renderCompra(host,vm){
       el("span",{className:"row-text"},
         el("span",{className:"row-name",text:r.name}),
         r.hint ? el("span",{className:"row-hint",text:r.hint}) : null),
-      r.tag ? el("span",{className:"tag "+({"tuyo":"mine","siempre":"fixed","opcional":"opt","básico":"basic"})[r.tag],text:r.tag}) : null,
+      r.tag ? el("span",{className:"tag "+({"una vez":"mine","siempre":"fixed","opcional":"opt","básico":"basic"})[r.tag],text:r.tag}) : null,
       r.qty ? el("span",{className:"row-qty",text:r.qty}) : null));
 
   const section=(title,count,rows,extra)=>el("section",{className:"sec"+(extra||"")},
@@ -109,15 +112,21 @@ export function renderCompra(host,vm){
         text:"Apunta lo que sueles desayunar (pan, leche, café…) y te lo recordará cada semana."}) : null));
   }
 
-  /* añadir algo que no viene del menú: fijo abajo, al alcance del pulgar */
+  /* añadir algo que no viene del menú: fijo abajo, al alcance del pulgar.
+     El botón de al lado elige si es para una sola compra o para siempre. */
   const input=el("input",{type:"text",placeholder:"Añadir algo a la lista…","aria-label":"Añadir a la lista",enterkeyhint:"done"});
+  const mode=el("button",{className:"addmode","aria-pressed":addForever?"true":"false",
+    "aria-label":addForever?"Se añadirá para siempre. Tocar para una sola vez":"Se añadirá una sola vez. Tocar para siempre",
+    onClick:()=>{ addForever=!addForever; renderCompra(host,vm); const i=host.querySelector(".addbar input"); i.value=input.value; i.focus(); }},
+    svg(addForever?ICON.pin:ICON.check,"2.2"), addForever?"Siempre":"Una vez");
   const add=()=>{
     const n=input.value.trim();
     if(!n){ input.focus(); return; }
-    const undo=vm.addCustom(n,null,"");
-    showUndo(n.charAt(0).toUpperCase()+n.slice(1)+" añadido a la lista", undo);
+    const name=n.charAt(0).toUpperCase()+n.slice(1);
+    if(addForever) showUndo(name+" añadido para siempre", vm.addStaple(n));
+    else showUndo(name+" añadido para esta compra", vm.addCustom(n,null,""));
   };
   input.addEventListener("keydown",e=>{ if(e.key==="Enter") add(); });
   host.append(el("div",{className:"addbar"},el("div",{className:"addbar-in"},
-    input, el("button",{"aria-label":"Añadir",onClick:add},svg(ICON.plus,"2.4")))));
+    input, mode, el("button",{className:"addgo","aria-label":"Añadir",onClick:add},svg(ICON.plus,"2.4")))));
 }

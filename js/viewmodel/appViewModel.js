@@ -194,7 +194,7 @@ export function createAppViewModel(now=()=>new Date()){
       const hideDone=repo.hideDone();
       const row=i=>({
         key:i.key, name:cap(i.item), hint:i.hint, qty:rules.itemQtyText(i), checked:!!s.checked[i.key],
-        tag: i.breakfast ? null : i.staple ? "siempre" : i.custom ? "tuyo" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
+        tag: i.breakfast ? null : i.staple ? "siempre" : i.custom ? "una vez" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
       });
       const visible=rows=>hideDone ? rows.filter(r=>!r.checked) : rows;
       const fd=fromDay(st.week);
@@ -511,6 +511,14 @@ export function createAppViewModel(now=()=>new Date()){
       notify();
       return ()=>{ editWeekState(w,s=>{ s.custom=(s.custom||[]).slice(0,-1); }); notify(); };
     },
+    /* añadir un producto que sale siempre (todas las semanas) */
+    addStaple(name){
+      const n=String(name||"").trim(); if(!n) return null;
+      const before=repo.staples();
+      repo.saveStaples(before.concat([{key:"fijo::"+Date.now()+"::"+norm(n), item:n, qty:null, unit:null, group:"fijo"}]));
+      notify();
+      return ()=>{ repo.saveStaples(before); notify(); };
+    },
     setItemQty(key,qty,unit){
       const v = qty==null || isNaN(qty) ? null : qty;
       if(isStaple(key)){
@@ -547,18 +555,19 @@ export function createAppViewModel(now=()=>new Date()){
     closeShopping(amount){
       const w=st.week;
       let before;
-      let beforeRemoved;
+      let beforeRemoved, beforeCustom;
       const beforeSpend=repo.spending();
       if(amount!=null && amount>0){
         repo.saveSpending(beforeSpend.concat([{id:"g"+Date.now(), date:isoDate(now()), amount, week:w+1}]));
       }
       editWeekState(w,s=>{
-        before=clone(s.checked); beforeRemoved=clone(s.removed||[]);
+        before=clone(s.checked); beforeRemoved=clone(s.removed||[]); beforeCustom=clone(s.custom||[]);
         s.checked={};
+        s.custom=[]; /* lo añadido «una vez» ya se ha comprado */
         s.removed=(s.removed||[]).filter(k=>!isStaple(k)); /* los fijos vuelven la próxima vez */
       });
       notify();
-      return ()=>{ editWeekState(w,s=>{ s.checked=before; s.removed=beforeRemoved; }); repo.saveSpending(beforeSpend); notify(); };
+      return ()=>{ editWeekState(w,s=>{ s.checked=before; s.removed=beforeRemoved; s.custom=beforeCustom; }); repo.saveSpending(beforeSpend); notify(); };
     },
     deleteSpend(id){
       const before=repo.spending();

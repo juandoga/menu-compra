@@ -283,3 +283,19 @@ test("ViewModel: lo congelado de mañana sale hoy para sacarlo, y en el plan de 
   assert.equal(vm.hoy().thaw.length,0);
   assert.ok(nombre.length>0);
 });
+
+test("ViewModel: añadir «una vez» se quita al cerrar la compra; «siempre» se queda", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,9,12,12)); /* lunes */
+  vm.setCurrentWeek(0);
+  vm.addCustom("hielo",null,"");
+  vm.addStaple("colines");
+  const filas=()=>vm.compra().sections.flatMap(s=>s.rows);
+  assert.equal(filas().find(r=>r.name==="Hielo").tag,"una vez");
+  assert.equal(filas().find(r=>r.name==="Colines").tag,"siempre");
+  const undo=vm.closeShopping();
+  assert.equal(filas().find(r=>r.name==="Hielo"),undefined);
+  assert.ok(filas().find(r=>r.name==="Colines"));
+  undo();
+  assert.ok(filas().find(r=>r.name==="Hielo"));
+});

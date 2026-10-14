@@ -28,7 +28,7 @@ export function openIngredientSheet(vm,key){
         hintLine("Sale siempre en la lista. Si una semana no lo necesitas, táchalo como lo demás. Al cerrar la compra vuelve a aparecer sin tachar.",{marginTop:"0"})));
     }else if(i.custom){
       host.append(block("Añadido por ti",
-        hintLine("Lo añadiste tú a la lista de esta semana. Si lo compras a menudo (bolsas de basura, lavavajillas…), fíjalo y saldrá todas las semanas.",{marginTop:"0"})));
+        hintLine("Lo añadiste para esta compra: se quita al pulsar «Compra hecha». Si lo compras a menudo (bolsas de basura, lavavajillas…), pásalo a «siempre».",{marginTop:"0"})));
     }else{
       host.append(block("Aparece en "+i.origins.length+(i.origins.length===1?" comida":" comidas"),
         i.origins.map(o=>el("div",{className:"origin"},
@@ -125,7 +125,7 @@ export function openCloseSheet(vm){
       warn,
       hintLine("Se suma al gasto del mes. Puedes dejarlo vacío.")));
     host.append(el("p",{style:{fontSize:"13.5px",color:"var(--ink-soft)",lineHeight:"1.5",margin:"0 0 12px"},
-      text:"Al cerrar se desmarca toda la lista y la semana queda lista para la próxima vez. Tus cantidades y los productos que añadiste se mantienen."}));
+      text:"Al cerrar se desmarca toda la lista y la semana queda lista para la próxima vez. Lo que añadiste «una vez» se quita; lo de «siempre» vuelve sin tachar."}));
     const close=()=>{
       const txt=amount.value.trim();
       const n=parseAmount(txt);
