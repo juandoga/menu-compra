@@ -117,8 +117,9 @@ export function renderCompra(host,vm){
   const input=el("input",{type:"text",placeholder:"Añadir algo a la lista…","aria-label":"Añadir a la lista",enterkeyhint:"done"});
   const mode=el("button",{className:"addmode","aria-pressed":addForever?"true":"false",
     "aria-label":addForever?"Se añadirá para siempre. Tocar para una sola vez":"Se añadirá una sola vez. Tocar para siempre",
-    onClick:()=>{ addForever=!addForever; renderCompra(host,vm); const i=host.querySelector(".addbar input"); i.value=input.value; i.focus(); }},
-    svg(addForever?ICON.pin:ICON.check,"2.2"), addForever?"Siempre":"Una vez");
+    onClick:()=>{ addForever=!addForever; renderCompra(host,vm); const i=host.querySelector(".addbar input"); i.value=input.value; i.focus(); },
+    title:addForever?"Fijo: se queda siempre en la lista":"Puntual: solo para esta compra"},
+    svg(ICON.pin,"2.2"));
   const add=()=>{
     const n=input.value.trim();
     if(!n){ input.focus(); return; }

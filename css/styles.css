@@ -336,10 +336,11 @@ h1,h2,h3{margin:0;}
 .addbar .addgo{width:52px;height:52px;border-radius:999px;border:0;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:0 0 auto;padding:0;}
 .addbar .addgo svg{width:22px;height:22px;}
 /* «Una vez» / «Siempre» */
-.addbar .addmode{flex:0 0 auto;height:52px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line-strong);
-  background:var(--paper);color:var(--ink);display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;white-space:nowrap;}
-.addbar .addmode svg{width:16px;height:16px;}
-.addbar .addmode[aria-pressed="true"]{background:var(--strong);color:var(--on-strong);border-color:var(--strong);}
+.addbar .addmode{flex:0 0 auto;width:52px;height:52px;padding:0;border-radius:999px;border:1.5px solid var(--line-strong);
+  background:var(--paper);color:var(--ink-faint);display:grid;place-items:center;transition:background .15s,color .15s,border-color .15s;}
+.addbar .addmode svg{width:22px;height:22px;transform:rotate(30deg);}
+.addbar .addmode[aria-pressed="true"]{background:var(--accent-tint);color:var(--accent);border-color:var(--accent);}
+.addbar .addmode[aria-pressed="true"] svg{fill:currentColor;}
 #viewShop{padding-bottom:84px;}
 
 /* ---------- barra de pestañas flotante ---------- */
