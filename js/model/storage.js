@@ -24,6 +24,7 @@ export const KEYS = {
   notify:  "menuCompraApp_notify_v1",     /* avisos del congelador en el móvil: "1" activados */
   seasonMenu:"menuCompraApp_menu_",       /* + estación: el menú propio de esa estación */
   house:   "menuCompraApp_house_v1",      /* código de la casa compartida (si estás en una) */
+  houseName:"menuCompraApp_houseName_v1", /* nombre de la casa: se comparte, así todos ven el mismo */
   pending: "menuCompraApp_syncPending_v1",/* lo cambiado que aún no ha llegado al servidor */
   lastPull:"menuCompraApp_syncLast_v1"    /* hasta cuándo se han recibido los cambios de la casa */
 };

@@ -95,7 +95,7 @@ export function renderCompra(host,vm){
     el("div",{className:"sec-head"},el("h2",{text:title}),el("span",{text:count})),
     rows.map(row));
 
-  d.visibleSections.forEach(s=>host.append(section(s.label, s.done+" de "+s.rows.length, s.rows)));
+  d.visibleSections.forEach(s=>host.append(section(s.label, s.done+" de "+s.rows.length, s.rows, s.kind==="aisle" ? "" : " "+s.kind)));
   if(d.showOptionals && d.optionals.length) host.append(section("Opcionales","fuera del total",d.optionals," optionals"));
 
   /* recordatorios de desayuno: por si falta algo; no cuentan en el total */

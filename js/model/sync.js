@@ -28,6 +28,10 @@ function setStatus(state){ status={state, at:Date.now()}; listeners.forEach(fn=>
 export function syncStatus(){ return status; }
 
 export function houseCode(){ return store.get(KEYS.house); }
+export function houseName(){ return houseCode() ? (store.get(KEYS.houseName) || "Casa sin nombre") : null; }
+const cleanName=n=>String(n||"").trim().replace(/\s+/g," ").slice(0,40);
+/* cambiar el nombre: se envía como cualquier otro cambio, y les llega a todos */
+export function setHouseName(n){ const c=cleanName(n); if(c) store.set(KEYS.houseName,c); }
 const online=()=>typeof navigator==="undefined" || navigator.onLine!==false;
 
 /* «k7pm 3qxd» → «K7PM-3QXD»; si no tiene 8 letras/números, null */
@@ -131,17 +135,31 @@ function applyRows(rows,all){
 
 /* ---------- crear, unirse, salir ---------- */
 /* Crea una casa nueva con lo que hay en este móvil. Devuelve el código. */
-export async function createHouse(){
+export async function createHouse(name){
   const code=await rpc("menuse_crear_casa",{});
   store.setQuiet(KEYS.house,code);
+  store.setQuiet(KEYS.houseName,cleanName(name)||"Mi casa");
   store.removeQuiet(KEYS.lastPull);
   store.setPendingKeys(store.sharedKeys());
   const ok=await push();
   if(!ok){ /* no se pudo subir: mejor no quedarse a medias */
-    store.removeQuiet(KEYS.house); store.setPendingKeys([]);
+    store.removeQuiet(KEYS.house); store.removeQuiet(KEYS.houseName); store.setPendingKeys([]);
     throw new Error("No se pudo subir tu menú a la casa. Prueba otra vez con conexión.");
   }
   return code;
+}
+
+/* Antes de unirse: ¿existe esa casa y cómo se llama? Devuelve {code, name} o {error} */
+export async function peekHouse(text){
+  const code=normalizeCode(text);
+  if(!code) return {error:"El código tiene 8 letras y números, como K7PM-3QXD."};
+  if(!online()) return {error:"Hace falta conexión para unirse a una casa."};
+  try{
+    if(!(await rpc("menuse_existe_casa",{p_codigo:code}))) return {error:"No hay ninguna casa con ese código."};
+    const rows=await rpc("menuse_leer",{p_codigo:code, p_desde:null}) || [];
+    const r=rows.find(x=>x.clave===KEYS.houseName);
+    return {code, name:(r && r.valor) || "Casa sin nombre"};
+  }catch(e){ return {error:"No se pudo conectar. Prueba otra vez en un momento."}; }
 }
 
 /* Une este móvil a una casa que ya existe: lo de la casa sustituye a lo de este móvil.
@@ -168,6 +186,7 @@ export async function joinHouse(text){
 export function leaveHouse(){
   clearTimeout(pushTimer);
   store.removeQuiet(KEYS.house);
+  store.removeQuiet(KEYS.houseName);
   store.removeQuiet(KEYS.lastPull);
   store.setPendingKeys([]);
   setStatus("idle");

@@ -67,7 +67,8 @@ test("Juan crea la casa: se sube lo que tenía", async ()=>{
   usar(movilJuan);
   store.set(KEYS.menu,'["menú de Juan"]');
   store.set(KEYS.theme,"dark");
-  codigo=await sync.createHouse();
+  codigo=await sync.createHouse("  Casa   García ");
+  assert.equal(sync.houseName(),"Casa García");
   assert.equal(sync.houseCode(),codigo);
   const enServidor=casas.get(codigo);
   assert.equal(enServidor.get(KEYS.menu).valor,'["menú de Juan"]');
@@ -78,6 +79,7 @@ test("Juan crea la casa: se sube lo que tenía", async ()=>{
 
 test("Ana se une: lo suyo se sustituye por lo de la casa, pero su tema se queda", async ()=>{
   usar(movilAna);
+  assert.deepEqual(await sync.peekHouse(codigo),{code:codigo,name:"Casa García"});
   store.set(KEYS.menu,'["menú viejo de Ana"]');
   store.set(KEYS.spend,"[1,2]");
   store.set(KEYS.theme,"light");
@@ -163,4 +165,19 @@ test("la pantalla puede preguntar por la casa (el ViewModel llega a sync.js)", a
   assert.equal(vm.houseInfo().code,codigo);
   assert.equal(vm.normalizeHouseCode("abcd 1000"),"ABCD-1000");
   assert.equal(await vm.syncNow(),false);
+});
+
+test("el nombre de la casa: lo cambia uno y lo ven todos; al salir, ya no estás en ninguna", async ()=>{
+  usar(movilJuan);
+  sync.setHouseName("Los García");
+  await sync.push();
+  /* Ana salió antes; vuelve a unirse y ve el nombre nuevo */
+  usar(movilAna);
+  assert.equal(sync.houseName(),null);
+  assert.equal((await sync.peekHouse(codigo)).name,"Los García");
+  await sync.joinHouse(codigo);
+  assert.equal(sync.houseName(),"Los García");
+  sync.leaveHouse();
+  assert.equal(sync.houseName(),null);
+  assert.equal(store.get(KEYS.houseName),null);
 });
