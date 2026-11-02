@@ -7,6 +7,7 @@
 
 import * as repo from "../model/repository.js";
 import * as rules from "../model/rules.js";
+import * as house from "../model/sync.js"; /* casa compartida */
 import { DAYS } from "../model/defaultMenu.js";
 import { sectionFor, sectionLabel } from "../model/sections.js";
 import { cap, clone, fmt, norm, parseItem, qtyText, itemKey } from "../model/text.js";
@@ -642,6 +643,32 @@ export function createAppViewModel(now=()=>new Date()){
     markBackup(){ repo.markBackup(now().getTime()); notify(); },
     snoozeBackup(){ repo.setSnooze(now().getTime()+7*DAY_MS); notify(); },
     importBackup(text){ return repo.importData(text); }, /* null si fue bien; si no, el motivo */
+
+    /* --- casa compartida --- */
+    houseInfo(){
+      const st2=house.syncStatus();
+      return {code:house.houseCode(), state:st2.state, at:st2.at};
+    },
+    onSyncStatus(fn){ return house.onStatus(fn); },
+    /* pide los cambios de la casa; si ha llegado algo, se repinta. Devuelve true si cambió algo */
+    async syncNow(){
+      const changed=await house.pull();
+      if(changed) this.reloadShared();
+      return changed;
+    },
+    /* lo guardado ha cambiado por fuera (otro móvil de la casa): volver a leerlo */
+    reloadShared(){
+      repo.reload();
+      const before=st.curWeek;
+      st.curWeek=cycleWeekOn(now(),repo.cycleStart());
+      /* sólo se mueve la semana que miras si en la casa han cambiado qué semana toca */
+      if(st.curWeek!==before && st.curWeek!=null){ st.week=st.curWeek; st.shopAutoWeek=false; }
+      notify();
+    },
+    async createHouse(){ return house.createHouse(); },          /* devuelve el código */
+    async joinHouse(code){ return house.joinHouse(code); },      /* null si fue bien; si no, el motivo */
+    leaveHouse(){ house.leaveHouse(); notify(); },
+    normalizeHouseCode(t){ return house.normalizeCode(t); },
     resetMenu(){
       const before=repo.menuSnapshot();
       repo.resetMenu(); notify();

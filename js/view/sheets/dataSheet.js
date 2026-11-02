@@ -14,7 +14,9 @@ export function backupNote(vm){
 
 export function openDataSheet(vm){
   openSheet(host=>{
-    sheetHeader(host,"Copia de seguridad","Tus datos viven sólo en este navegador");
+    sheetHeader(host,"Copia de seguridad", vm.houseInfo().code
+      ? "Tus datos están en este móvil y en tu casa compartida"
+      : "Tus datos viven sólo en este navegador");
     const json=vm.backupJSON();
 
     const ta=el("textarea",{className:"field",readOnly:true,value:json});
@@ -37,7 +39,9 @@ export function openDataSheet(vm){
       }
     }});
     host.append(block("Guardar una copia",ta,el("div",{className:"addrow"},copyBtn,dlBtn),
-      hintLine("Guarda el archivo en Drive o mándatelo por correo. Si borras los datos de Chrome o cambias de móvil, es lo único que recupera tu menú.")));
+      hintLine(vm.houseInfo().code
+        ? "Guarda el archivo en Drive o mándatelo por correo. Al restaurar una copia, también cambia el menú de los demás móviles de la casa."
+        : "Guarda el archivo en Drive o mándatelo por correo. Si borras los datos de Chrome o cambias de móvil, es lo único que recupera tu menú.")));
 
     const file=el("input",{className:"field",type:"file",accept:"application/json,.json"});
     const ta2=el("textarea",{className:"field",placeholder:"…o pega aquí el contenido del archivo",style:{marginTop:"8px"}});

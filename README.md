@@ -25,6 +25,7 @@ js/app.js               el punto de arranque: conecta las tres partes
 js/model/
   defaultMenu.js        el menú original de 4 semanas
   storage.js            lo único que habla con el almacenamiento del navegador
+  sync.js               casa compartida: envía y recibe los cambios del servidor
   repository.js         leer y guardar cada tipo de dato
   rules.js              las reglas: lista de la compra, personas, cambios de día, buscador
   calendar.js           fechas y el ciclo de 4 semanas
@@ -38,8 +39,9 @@ js/view/
   semanaView.js         pestaña Semana
   compraView.js         pestaña Compra
   dishBlock.js          cómo se pinta un plato
-  sheets/               las ventanas que suben desde abajo
+  sheets/               las ventanas que suben desde abajo (houseSheet.js: casa compartida)
 tests/logica.test.mjs   pruebas de la lógica, sin pantalla
+tests/sync.test.mjs     pruebas de la casa compartida, con un servidor de mentira
 sw.js                   modo sin conexión y aviso de versión nueva
 ```
 
@@ -67,6 +69,24 @@ Al final debe poner `fail 0`.
 Si cambias `sw.js`, sube el número de `CACHE` (`menuse-v3` → `menuse-v4`).
 Si creas un archivo nuevo en `js/` o `css/`, añádelo a la lista `ASSETS` de `sw.js`.
 
+## Casa compartida (varios móviles con el mismo menú)
+
+En Ajustes → Casa compartida se crea una «casa» y se recibe un código (por ejemplo `K7PM-3QXD`).
+Los móviles que se unen con ese código comparten el menú, las listas, los fijos, los pasillos,
+las personas y el gasto. Cada casa es independiente de las demás.
+
+- Cada móvil sigue guardando todo en su navegador: sin conexión funciona igual y, al volver,
+  envía lo que cambió.
+- Los cambios de los demás se recogen al abrir la app, al volver a ella y cada 20 segundos
+  (no mientras hay una ventana abierta, para no pisar lo que estás editando).
+- Si dos personas cambian lo mismo a la vez, se queda el último cambio.
+- Son de cada móvil: el tema, los avisos del congelador y cómo se ve la lista.
+
+**Servidor:** Supabase, dentro del proyecto *el-contraste* (el plan gratis sólo permite dos
+proyectos). Todo lo de Menuse está aparte, en el esquema `menuse` (tablas `casas` y `datos`),
+y desde fuera sólo se puede usar con cuatro funciones: `menuse_crear_casa`, `menuse_existe_casa`,
+`menuse_leer` y `menuse_guardar`. La dirección y la clave pública están al principio de `js/model/sync.js`.
+
 ## Pendiente
 
 - **Importar un menú desde Excel.** Viable sin servidor (librería que lee .xlsx en el navegador).
@@ -74,5 +94,7 @@ Si creas un archivo nuevo en `js/` o `css/`, añádelo a la lista `ASSETS` de `s
   separados por comas: «300 g pescado blanco, 2 ud patatas»), se rellena en Excel y se sube desde
   Ajustes para el menú general o una estación. Antes de sustituir nada, mostrar un resumen
   («28 días leídos, 3 filas con dudas»).
-- **Menú compartido entre varias personas de la casa** (ver conversación de octubre 2026):
-  necesita un servidor pequeño para sincronizar.
+- **Casa compartida con cuentas:** pasar del código a inicio de sesión (cada persona con su cuenta
+  y grupos familiares).
+- **Sacar Menuse de el-contraste:** ahora comparte proyecto de Supabase con Vista Plena;
+  buscar una solución mejor que mezclar proyectos.

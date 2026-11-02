@@ -1,7 +1,7 @@
 /* Menuse — service worker: la app y la lista funcionan sin conexión.
    Cada vez que cambies este archivo, sube el número de CACHE (v2, v3…).
    Si creas un archivo nuevo en js/ o css/, añádelo a la lista ASSETS. */
-const CACHE = "menuse-v14";
+const CACHE = "menuse-v15";
 const PLAN_CACHE = "menuse-avisos";   /* plan de avisos del congelador (lo escribe la app) */
 const ASSETS = [
   "./",
@@ -15,6 +15,7 @@ const ASSETS = [
   "./js/model/rules.js",
   "./js/model/sections.js",
   "./js/model/storage.js",
+  "./js/model/sync.js",
   "./js/model/text.js",
   "./js/view/compraView.js",
   "./js/view/dishBlock.js",
@@ -25,6 +26,7 @@ const ASSETS = [
   "./js/view/semanaView.js",
   "./js/view/sheets/dataSheet.js",
   "./js/view/sheets/dishSheet.js",
+  "./js/view/sheets/houseSheet.js",
   "./js/view/sheets/searchSheet.js",
   "./js/view/sheets/settingsSheet.js",
   "./js/view/sheets/shopSheets.js",

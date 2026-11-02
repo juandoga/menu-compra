@@ -69,6 +69,8 @@ export function getMenu(){ return MENU; }
 export function saveMenu(){ store.setJSON(menuKey(CUR), MENU); }
 export function menuSnapshot(){ return store.get(menuKey(CUR)); }
 export function resetMenu(){ MENU=migrate(clone(DEFAULT_MENU)); saveMenu(); }
+/* vuelve a leer el menú (por ejemplo, porque han llegado cambios de la casa compartida) */
+export function reload(){ if(CUR!=="base" && !hasSeasonMenu(CUR)) CUR="base"; MENU=loadMenu(CUR); }
 export function restoreMenuSnapshot(raw){
   if(raw!=null) store.set(menuKey(CUR),raw);
   MENU=loadMenu();

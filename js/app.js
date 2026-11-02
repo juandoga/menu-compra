@@ -3,7 +3,7 @@
    y engancha lo que es de la «carcasa» de la app: pestañas, semanas, tema y modo sin conexión. */
 
 import { createAppViewModel } from "./viewmodel/appViewModel.js";
-import { el, showSnack, applyTheme, linkBtn } from "./view/dom.js";
+import { el, showSnack, applyTheme, linkBtn, isSheetOpen } from "./view/dom.js";
 import { renderHoy } from "./view/hoyView.js";
 import { renderSemana } from "./view/semanaView.js";
 import { renderCompra } from "./view/compraView.js";
@@ -77,6 +77,18 @@ document.addEventListener("visibilitychange",checkDate);
 window.addEventListener("focus",checkDate);
 setInterval(checkDate,60000);
 
+/* ---------- casa compartida: recoger los cambios de los demás ---------- */
+/* al abrir, al volver a la app, al recuperar la conexión y cada 20 s mientras se mira.
+   Con una ventana abierta (editando un plato…) se espera a que se cierre. */
+const syncNow=()=>{
+  if(document.hidden || !vm.houseInfo().code) return;
+  if(isSheetOpen()) return; /* lo intenta de nuevo en la próxima vuelta */
+  vm.syncNow().catch(()=>{});
+};
+document.addEventListener("visibilitychange",syncNow);
+window.addEventListener("online",syncNow);
+setInterval(syncNow,20000);
+
 /* ---------- modo sin conexión y aviso de versión nueva ---------- */
 let updateShown=false;
 function showUpdate(){
@@ -96,3 +108,4 @@ if("serviceWorker" in navigator && location.protocol==="https:"){
 
 vm.setView("hoy");
 publishPlan(vm);
+syncNow();

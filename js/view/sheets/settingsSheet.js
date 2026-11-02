@@ -4,6 +4,7 @@
 import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme, switchBtn } from "../dom.js";
 import { openDataSheet } from "./dataSheet.js";
 import { openSpendSheet } from "./shopSheets.js";
+import { openHouseSheet } from "./houseSheet.js";
 import { notifySupported, permission, enableNotifications, backgroundSupported, publishPlan, testNotification } from "../notify.js";
 import { isInstalled, canInstall, promptInstall, onInstallChange } from "../install.js";
 
@@ -26,6 +27,15 @@ export function openSettingsSheet(vm){
             : hintLine("Para instalarla como app: menú ⋮ de Chrome → «Instalar aplicación». Si sólo aparece «Añadir a pantalla de inicio», elige «Instalar», no «Crear acceso directo».",{marginTop:"0"}),
           hintLine("Instalada sale en el cajón de aplicaciones, se abre a pantalla completa y conserva tu menú y tu lista.")));
       }
+
+      /* --- casa compartida --- */
+      const house=vm.houseInfo();
+      host.append(block("Casa compartida",
+        house.code
+          ? el("p",{className:"set-now"},"Estás en la casa ",el("b",{text:house.code}),".")
+          : null,
+        el("button",{className:"btn ghost full",text:house.code?"Ver la casa":"Compartir con tu familia",onClick:()=>openHouseSheet(vm)}),
+        house.code ? null : hintLine("Crea una casa o únete a una con un código: todos los móviles de la casa verán el mismo menú y la misma lista.")));
 
       /* --- estación --- */
       const choices=[{id:"auto",label:"Automática"}].concat(info.seasons.map(s=>({id:s.id,label:s.label})));
