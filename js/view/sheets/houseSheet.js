@@ -1,7 +1,10 @@
 /* VIEW · Casa compartida: crear una casa (con nombre), unirse con un código, ver el estado,
    cambiar el nombre y salir. Se abre desde Ajustes y desde el nombre de la casa en la cabecera. */
 
-import { el, openSheet, sheetHeader, block, hintLine, linkBtn } from "../dom.js";
+import { el, openSheet, sheetHeader, block, hintLine, linkBtn, sheetAlive } from "../dom.js";
+
+/* enlace que abre Menuse con el código ya puesto: …/menu-compra/?casa=K7PM-3QXD */
+export function inviteLink(code){ return location.origin+location.pathname+"?casa="+encodeURIComponent(code); }
 
 /* «Sincronizado hace 2 min», «Sin conexión…»: el estado en palabras */
 export function houseStatusText(info){
@@ -17,8 +20,19 @@ export function houseStatusText(info){
   }
 }
 
-export function openHouseSheet(vm){
+/* opts.join: código de un enlace de invitación (se busca la casa nada más abrir) */
+/* saca el código de un texto: «K7PM-3QXD», «k7pm3qxd» o un enlace con ?casa=… */
+function codeFrom(text){
+  const t=String(text||"");
+  const m=t.match(/[?&]casa=([^&#\s]+)/i);
+  const raw=m ? decodeURIComponent(m[1]) : t;
+  const c=raw.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  return c.length===8 ? c.slice(0,4)+"-"+c.slice(4) : null;
+}
+
+export function openHouseSheet(vm,opts){
   openSheet(host=>{
+    const alive=sheetAlive(host);
     let step=null;     /* null · "join-confirm" · "leave-confirm" · "rename" */
     let typed="";      /* lo escrito en el código */
     let newName="";    /* nombre para la casa nueva */
@@ -33,23 +47,36 @@ export function openHouseSheet(vm){
     };
 
     function draw(){
-      if(!host.isConnected) return;
+      if(!alive()) return;
       host.textContent="";
       const info=vm.houseInfo();
       sheetHeader(host,"Casa compartida","El mismo menú y la misma lista en varios móviles");
       const msgLine=msg ? el("p",{className:"hintline",text:msg,style:{color:msgBad?"var(--danger)":"var(--ink-faint)"}}) : null;
 
+      if(info.code && step==="switch-confirm" && peek){
+        /* --- te invitan a otra casa estando ya en una --- */
+        host.append(block("Te invitan a otra casa",
+          el("p",{className:"housename",text:peek.name}),
+          el("p",{className:"hintline",text:"Código "+peek.code,style:{marginTop:"0"}}),
+          hintLine("Ahora estás en «"+info.name+"». Si cambias, este móvil saldrá de ella y tendrá el menú y la lista de «"+peek.name+"»."),
+          el("div",{className:"addrow"},
+            el("button",{className:"btn ghost",style:{flex:"1"},text:"Quedarme",disabled:!!busy,onClick:()=>{ step=null; peek=null; draw(); }}),
+            el("button",{className:"btn",style:{flex:"1"},text:busy==="join"?"Cambiando…":"Cambiar de casa",disabled:!!busy,onClick:()=>join()})),
+          msgLine));
+        return;
+      }
+
       if(info.code){
         /* --- ya estás en una casa --- */
-        const copyBtn=el("button",{className:"btn ghost",style:{flex:"1"},text:"Copiar código",onClick:()=>{
-          const done=()=>{ copyBtn.textContent="Copiado"; setTimeout(()=>{ copyBtn.textContent="Copiar código"; },2000); };
-          if(navigator.clipboard) navigator.clipboard.writeText(info.code).then(done,()=>{ copyBtn.textContent="Selecciona y copia"; });
+        const copyBtn=el("button",{className:"btn ghost",style:{flex:"1"},text:"Copiar enlace",onClick:()=>{
+          const done=()=>{ copyBtn.textContent="Copiado"; setTimeout(()=>{ copyBtn.textContent="Copiar enlace"; },2000); };
+          if(navigator.clipboard) navigator.clipboard.writeText(inviteLink(info.code)).then(done,()=>{ copyBtn.textContent="No se pudo copiar"; });
         }});
         const shareBtn = navigator.share
           ? el("button",{className:"btn",style:{flex:"1"},text:"Compartir",onClick:()=>{
               navigator.share({title:"Menuse",
-                text:"Únete a «"+info.name+"» en Menuse: Ajustes → Casa compartida → Unirme, con el código "+info.code,
-                url:location.href.split("#")[0]}).catch(()=>{});
+                text:"Únete a «"+info.name+"» en Menuse. Abre el enlace y pulsa «Sí, unirme» (o escribe el código "+info.code+" en Ajustes → Casa compartida).",
+                url:inviteLink(info.code)}).catch(()=>{});
             }})
           : null;
 
@@ -69,14 +96,15 @@ export function openHouseSheet(vm){
           nameBlock=block("Estás en",
             el("p",{className:"housename",text:info.name}),
             el("p",{className:"hintline",text:houseStatusText(info),style:{marginTop:"0"}}),
-            linkBtn("Cambiar el nombre",()=>{ newName=info.name; step="rename"; draw(); }));
+            linkBtn("Cambiar el nombre",()=>{ newName=info.name; step="rename"; draw(); }),
+            msgLine);
         }
         host.append(nameBlock);
 
         host.append(block("Código para unirse",
           el("p",{className:"housecode",text:info.code}),
           el("div",{className:"addrow"},copyBtn,shareBtn),
-          hintLine("En el otro móvil: Ajustes → Casa compartida → «Unirme a una casa», y escribe este código."),
+          hintLine("Lo más fácil: «Compartir» y mándalo por WhatsApp. Al abrir el enlace, Menuse ya trae el código y sólo hay que pulsar «Sí, unirme»."),
           hintLine("Quien tenga el código puede ver y cambiar vuestro menú y vuestra lista: pásalo sólo a tu familia.")));
         host.append(block("Qué se comparte",
           hintLine("Los menús, las listas de la compra, los productos fijos, el orden de los pasillos, las personas y el gasto.",{marginTop:"0"}),
@@ -107,14 +135,7 @@ export function openHouseSheet(vm){
           hintLine("Lo que hay ahora en este móvil se sustituirá por el menú y la lista de «"+peek.name+"». Si quieres conservarlo, guarda antes una copia de seguridad."),
           el("div",{className:"addrow"},
             el("button",{className:"btn ghost",style:{flex:"1"},text:"Cancelar",disabled:!!busy,onClick:()=>{ step=null; peek=null; msg=""; draw(); }}),
-            el("button",{className:"btn",style:{flex:"1"},text:busy==="join"?"Uniendo…":"Sí, unirme",disabled:!!busy,onClick:async()=>{
-              busy="join"; msg=""; draw();
-              const error=await vm.joinHouse(peek.code);
-              busy=false;
-              if(error){ msg=error; msgBad=true; step=null; peek=null; draw(); return; }
-              msg="Listo. Recargando…"; msgBad=false; draw();
-              setTimeout(()=>location.reload(),700);
-            }})),
+            el("button",{className:"btn",style:{flex:"1"},text:busy==="join"?"Uniendo…":"Sí, unirme",disabled:!!busy,onClick:()=>join()})),
           msgLine));
         return;
       }
@@ -129,23 +150,53 @@ export function openHouseSheet(vm){
         }}),
         hintLine("Sube tu menú, tus listas y tus fijos y te da un código para pasárselo a tu familia. Todos verán este nombre.")));
 
+      const codeInput=field(typed,"Código, por ejemplo K7PM-3QXD",v=>{ typed=v; },
+        {autocapitalize:"characters",spellcheck:false,inputMode:"text",enterKeyHint:"go",style:{letterSpacing:"1px",flex:"1",minWidth:"0"}});
+      codeInput.addEventListener("keydown",e=>{ if(e.key==="Enter") lookUp(typed); });
+      /* «Pegar»: el código copiado de WhatsApp (o el enlace entero) sin escribirlo a mano */
+      const pasteBtn = navigator.clipboard && navigator.clipboard.readText
+        ? el("button",{className:"btn ghost",text:"Pegar",onClick:async()=>{
+            try{ const t=await navigator.clipboard.readText(); typed=codeFrom(t)||t.trim(); draw(); }
+            catch(e){ msg="El móvil no deja pegar desde aquí: mantén pulsada la caja y elige «Pegar»."; msgBad=true; draw(); }
+          }})
+        : null;
       host.append(block("Unirme a una casa",
-        field(typed,"Código, por ejemplo K7PM-3QXD",v=>{ typed=v; },
-          {autocapitalize:"characters",spellcheck:false,style:{letterSpacing:"1px"}}),
-        el("button",{className:"btn ghost full",style:{marginTop:"8px"},text:busy==="peek"?"Buscando…":"Unirme",disabled:!!busy,onClick:async()=>{
-          busy="peek"; msg=""; draw();
-          const r=await vm.peekHouse(typed);
-          busy=false;
-          if(r.error){ msg=r.error; msgBad=true; draw(); return; }
-          peek=r; step="join-confirm"; draw();
-        }}),
-        hintLine("Pide el código a quien creó la casa."),
+        el("div",{className:"qtyrow"},codeInput,pasteBtn),
+        el("button",{className:"btn ghost full",style:{marginTop:"8px"},text:busy==="peek"?"Buscando…":"Unirme",disabled:!!busy,onClick:()=>lookUp(typed)}),
+        hintLine("Pide el enlace o el código a quien creó la casa. Si te mandan el enlace, ábrelo y ya está."),
         msgLine));
     }
 
+    /* buscar la casa del código y pasar a «¿unirte?» */
+    async function lookUp(text){
+      busy="peek"; msg=""; draw();
+      const r=await vm.peekHouse(codeFrom(text)||text);
+      busy=false;
+      if(!alive()) return;
+      if(r.error){ msg=r.error; msgBad=true; step=null; draw(); return; }
+      const info=vm.houseInfo();
+      if(info.code===r.code){ msg="Ya estás en «"+info.name+"»."; msgBad=false; step=null; draw(); return; }
+      peek=r; step = info.code ? "switch-confirm" : "join-confirm"; draw();
+    }
+    async function join(){
+      busy="join"; msg=""; draw();
+      const error=await vm.joinHouse(peek.code);
+      busy=false;
+      if(error){ msg=error; msgBad=true; step=null; peek=null; draw(); return; }
+      msg="Listo. Recargando…"; msgBad=false; draw();
+      setTimeout(()=>{ location.href=location.origin+location.pathname; },700);
+    }
+
     draw();
-    /* el estado de la conexión se va actualizando mientras la ventana está abierta */
-    const off=vm.onSyncStatus(()=>{ if(host.isConnected && step!=="rename") draw(); else if(!host.isConnected) off(); });
-    if(vm.houseInfo().code) vm.syncNow().catch(()=>{});
+    /* el estado de la conexión se va actualizando mientras la ventana está abierta,
+       pero no mientras escribes (repintar quitaría el teclado) */
+    const off=vm.onSyncStatus(()=>{
+      if(!alive()){ off(); return; }
+      const a=document.activeElement;
+      if(step==="rename" || (a && a.tagName==="INPUT" && host.contains(a))) return;
+      draw();
+    });
+    if(opts && opts.join) lookUp(opts.join);
+    else if(vm.houseInfo().code) vm.syncNow().catch(()=>{});
   });
 }

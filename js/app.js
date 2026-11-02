@@ -86,6 +86,11 @@ window.addEventListener("offline",()=>{ if(vm.view==="shop") render(); });
 /* si la app se queda abierta en segundo plano y cambia el día, ponerse al día al volver */
 const checkDate=()=>{ if(!document.hidden) vm.checkDate(); };
 document.addEventListener("visibilitychange",checkDate);
+/* Android: si sales de la app con el cursor en una caja de texto, al volver no sale el teclado al tocarla
+   (para el móvil ya estaba escribiendo). Al salir, se suelta la caja; al volver, un toque la activa bien. */
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden && document.activeElement && document.activeElement.blur) document.activeElement.blur();
+});
 window.addEventListener("focus",checkDate);
 setInterval(checkDate,60000);
 
@@ -121,3 +126,12 @@ if("serviceWorker" in navigator && location.protocol==="https:"){
 vm.setView("hoy");
 publishPlan(vm);
 syncNow();
+
+/* enlace de invitación (…/?casa=K7PM-3QXD): se quita de la dirección y se abre la casa con el código puesto */
+try{
+  const invite=new URLSearchParams(location.search).get("casa");
+  if(invite){
+    history.replaceState(null,"",location.pathname+location.hash);
+    openHouseSheet(vm,{join:invite});
+  }
+}catch(e){}
