@@ -1,7 +1,7 @@
 /* VIEW · Ventanas de la lista de la compra: ficha de un producto, orden de pasillos,
    «¿Compra hecha?» y compartir. */
 
-import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, switchBtn, showUndo, copyText, euros } from "../dom.js";
+import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, switchBtn, showUndo, copyText, euros, sheetAlive } from "../dom.js";
 import { parseAmount } from "../../model/rules.js";
 
 /* --- ficha de un producto --- */
@@ -198,6 +198,7 @@ export function openBreakfastSheet(vm){
 /* --- gasto por meses --- */
 export function openSpendSheet(vm){
   openSheet(host=>{
+    const alive=sheetAlive(host);
     let open=null; /* mes desplegado */
     function draw(){
       host.textContent="";
@@ -223,7 +224,7 @@ export function openSpendSheet(vm){
             el("b",{text:euros(e.amount)}),
             el("button",{className:"abtn","aria-label":"Borrar este apunte",onClick:()=>{
               const undo=vm.deleteSpend(e.id); draw();
-              showUndo("Apunte borrado",()=>{ undo(); if(host.isConnected) draw(); });
+              showUndo("Apunte borrado",()=>{ undo(); if(alive()) draw(); });
             }},svg(ICON.close,"2.2"))))));
           return wrap;
         }),hintLine("Toca un mes para ver cada compra o borrar un apunte equivocado.")));

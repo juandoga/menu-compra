@@ -181,3 +181,16 @@ test("el nombre de la casa: lo cambia uno y lo ven todos; al salir, ya no estás
   assert.equal(sync.houseName(),null);
   assert.equal(store.get(KEYS.houseName),null);
 });
+
+test("cambiar de casa: lo pendiente se envía a la vieja y luego tienes lo de la nueva", async ()=>{
+  usar(movilOtraCasa);
+  const otra=await sync.createHouse("Casa Pérez");
+  store.set(KEYS.people,"6");          /* pendiente en Casa Pérez */
+  usar(movilJuan);
+  const antes=store.get(KEYS.people);
+  usar(movilOtraCasa);
+  assert.equal(await sync.joinHouse(codigo),null);
+  assert.equal(sync.houseName(),"Los García");
+  assert.equal(store.get(KEYS.people),antes);
+  assert.equal(casas.get(otra).get(KEYS.people).valor,"6","lo pendiente llegó a Casa Pérez antes de irse");
+});

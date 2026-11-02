@@ -123,8 +123,12 @@ const scrim=document.getElementById("scrim");
 const sheet=document.getElementById("sheet");
 const sheetIn=document.getElementById("sheetIn");
 let lastFocus=null;
+/* Cada ventana abierta lleva un número. Así, lo que una ventana dejó «escuchando» (cambios de la
+   casa, instalación…) sabe si su ventana sigue abierta o ya es otra, y no pinta encima. */
+let sheetGen=0;
 export function openSheet(build){
   lastFocus=document.activeElement;
+  sheetIn.dataset.gen=String(++sheetGen);
   sheetIn.textContent="";
   build(sheetIn);
   scrim.hidden=false; sheet.hidden=false;
@@ -132,12 +136,15 @@ export function openSheet(build){
   sheet.focus();
 }
 export function closeSheet(){
+  sheetIn.dataset.gen=String(++sheetGen);
   scrim.classList.remove("on"); sheet.classList.remove("on");
   setTimeout(()=>{ scrim.hidden=true; sheet.hidden=true; sheetIn.textContent=""; },260);
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
 /* ¿hay una ventana abierta? (mientras lo esté, no se recogen cambios de la casa para no pisar lo que editas) */
 export function isSheetOpen(){ return !sheet.hidden; }
+/* devuelve una función que dice si la ventana que se está construyendo sigue siendo la abierta */
+export function sheetAlive(host){ const g=host.dataset.gen; return ()=>host.dataset.gen===g; }
 scrim.addEventListener("click",closeSheet);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !sheet.hidden) closeSheet(); });
 

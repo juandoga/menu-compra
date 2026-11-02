@@ -173,6 +173,8 @@ export async function joinHouse(text){
     if(!(await rpc("menuse_existe_casa",{p_codigo:code}))) return "No hay ninguna casa con ese código.";
     rows=await rpc("menuse_leer",{p_codigo:code, p_desde:null}) || [];
   }catch(e){ return "No se pudo conectar. Prueba otra vez en un momento."; }
+  /* si ya estabas en otra casa, antes de irte se envía lo que tuvieras pendiente */
+  if(houseCode() && houseCode()!==code) await push();
   store.sharedKeys().forEach(k=>store.removeQuiet(k));
   store.removeQuiet(KEYS.lastPull);
   store.setPendingKeys([]);

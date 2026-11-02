@@ -80,6 +80,8 @@ Lo que escribes abajo en la lista va en apartados propios, separado de lo que pi
 En Ajustes → Casa compartida se crea una «casa» con un nombre (por ejemplo «Casa García») y se
 recibe un código (por ejemplo `K7PM-3QXD`). El nombre sale bajo el logo en todos los móviles de
 la casa; si no estás en ninguna, no sale nada y Ajustes lo dice.
+Para invitar: «Compartir» manda un enlace (`…/menu-compra/?casa=K7PM-3QXD`); al abrirlo, Menuse
+enseña la casa y sólo hay que pulsar «Sí, unirme». También se puede pegar el código o el enlace.
 Los móviles que se unen con ese código comparten el menú, las listas, los fijos, los pasillos,
 las personas y el gasto. Cada casa es independiente de las demás.
 

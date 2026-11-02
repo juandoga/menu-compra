@@ -1,7 +1,7 @@
 /* VIEW · Panel de ajustes: estación, menús por estación, tema y copia de seguridad.
    Está detrás del botón de la cabecera; son cosas que se tocan poco. */
 
-import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme, switchBtn } from "../dom.js";
+import { el, svg, ICON, openSheet, closeSheet, sheetHeader, block, hintLine, showUndo, applyTheme, switchBtn, sheetAlive } from "../dom.js";
 import { openDataSheet } from "./dataSheet.js";
 import { openSpendSheet } from "./shopSheets.js";
 import { openHouseSheet } from "./houseSheet.js";
@@ -11,6 +11,7 @@ import { isInstalled, canInstall, promptInstall, onInstallChange } from "../inst
 export function openSettingsSheet(vm){
   openSheet(host=>{
     let creating=null; /* estación cuyo «Crear» está abierto */
+    const alive=sheetAlive(host);
 
     function draw(){
       host.textContent="";
@@ -59,7 +60,7 @@ export function openSettingsSheet(vm){
                 el("button",{className:"btn ghost sm",text:"Editar",onClick:()=>{ closeSheet(); vm.viewSeason(s.id); }}),
                 el("button",{className:"abtn","aria-label":"Borrar el menú de "+s.label.toLowerCase(),onClick:()=>{
                   const undo=vm.deleteSeasonMenu(s.id); draw();
-                  showUndo("Menú de "+s.label.toLowerCase()+" borrado",()=>{ undo(); if(host.isConnected) draw(); });
+                  showUndo("Menú de "+s.label.toLowerCase()+" borrado",()=>{ undo(); if(alive()) draw(); });
                 }},svg(ICON.close,"2.2")))
             : el("button",{className:"btn ghost sm",text:"Crear","aria-expanded":creating===s.id?"true":"false",
                 onClick:()=>{ creating = creating===s.id ? null : s.id; draw(); }}));
@@ -122,6 +123,6 @@ export function openSettingsSheet(vm){
     }
     draw();
     /* si Chrome avisa de que ya se puede instalar mientras el panel está abierto */
-    const off=onInstallChange(()=>{ if(host.isConnected) draw(); else off(); });
+    const off=onInstallChange(()=>{ if(alive()) draw(); else off(); });
   });
 }
