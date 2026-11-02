@@ -136,6 +136,8 @@ export function closeSheet(){
   setTimeout(()=>{ scrim.hidden=true; sheet.hidden=true; sheetIn.textContent=""; },260);
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
+/* ¿hay una ventana abierta? (mientras lo esté, no se recogen cambios de la casa para no pisar lo que editas) */
+export function isSheetOpen(){ return !sheet.hidden; }
 scrim.addEventListener("click",closeSheet);
 document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !sheet.hidden) closeSheet(); });
 
