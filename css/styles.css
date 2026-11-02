@@ -512,3 +512,12 @@ a.btn{display:flex;align-items:center;justify-content:center;}
 /* casa compartida: el código, grande y fácil de leer */
 .housecode{margin:0 0 4px;padding:14px 8px;border-radius:12px;background:var(--paper);text-align:center;
   font:600 26px/1.2 ui-monospace,Menlo,Consolas,monospace;letter-spacing:3px;}
+.housename{margin:0 0 6px;font-size:22px;font-weight:700;line-height:1.2;overflow-wrap:anywhere;}
+.housename.none{color:var(--ink-soft);}
+/* nombre de la casa bajo el logo */
+.brand{display:flex;flex-direction:column;align-items:flex-start;min-width:0;flex:1;}
+.housetag{border:0;background:none;padding:2px 0 0;margin:0;font:inherit;font-size:12.5px;font-weight:600;
+  color:var(--ink-soft);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;
+  display:flex;align-items:center;gap:5px;}
+.housetag[hidden]{display:none;}
+.housetag svg{width:13px;height:13px;flex:0 0 auto;}

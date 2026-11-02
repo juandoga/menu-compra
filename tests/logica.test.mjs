@@ -161,13 +161,13 @@ test("ViewModel: fijar un producto, cerrar la compra y ocultar lo comprado", ()=
   vm.addCustom("lavavajillas",null,"");
   const key=vm.compra().sections.flatMap(s=>s.rows).find(r=>r.name==="Lavavajillas").key;
   vm.makeStaple(key);
-  const fijo=vm.compra().sections.find(s=>s.id==="hogar").rows[0];
-  assert.equal(fijo.tag,"siempre");
+  const fijo=vm.compra().sections.find(s=>s.id==="_always").rows[0];
+  assert.equal(fijo.name,"Lavavajillas");
   /* si esta semana no hace falta, se tacha: sigue en la lista */
   vm.toggleChecked(fijo.key);
-  assert.equal(vm.compra().sections.find(s=>s.id==="hogar").rows[0].checked,true);
+  assert.equal(vm.compra().sections.find(s=>s.id==="_always").rows[0].checked,true);
   vm.closeShopping(); /* al cerrar la compra vuelve sin tachar */
-  assert.equal(vm.compra().sections.find(s=>s.id==="hogar").rows[0].checked,false);
+  assert.equal(vm.compra().sections.find(s=>s.id==="_always").rows[0].checked,false);
   vm.toggleHideDone(); vm.toggleHideDone();
   /* ocultar comprados */
   const r=vm.compra().visibleSections[0].rows[0];
@@ -291,11 +291,36 @@ test("ViewModel: añadir «una vez» se quita al cerrar la compra; «siempre» s
   vm.addCustom("hielo",null,"");
   vm.addStaple("colines");
   const filas=()=>vm.compra().sections.flatMap(s=>s.rows);
-  assert.equal(filas().find(r=>r.name==="Hielo").tag,"una vez");
-  assert.equal(filas().find(r=>r.name==="Colines").tag,"siempre");
+  const apartado=n=>vm.compra().sections.find(s=>s.rows.some(r=>r.name===n)).id;
+  assert.equal(apartado("Hielo"),"_once");
+  assert.equal(apartado("Colines"),"_always");
   const undo=vm.closeShopping();
   assert.equal(filas().find(r=>r.name==="Hielo"),undefined);
   assert.ok(filas().find(r=>r.name==="Colines"));
   undo();
   assert.ok(filas().find(r=>r.name==="Hielo"));
+});
+
+test("ViewModel: lo de «una vez» y lo de «siempre» van en apartados propios; «una vez» se borra con «Compra hecha»", ()=>{
+  localStorage.clear();
+  const vm=createAppViewModel(()=>new Date(2026,8,28,12)); /* lunes */
+  vm.setCurrentWeek(0);
+  vm.addCustom("pilas",null,"");
+  vm.addStaple("detergente");
+  const c=vm.compra();
+  const ids=c.sections.map(s=>s.id);
+  assert.deepEqual(ids.slice(-2),["_once","_always"],"van al final, después de los pasillos");
+  assert.deepEqual(c.sections.find(s=>s.id==="_once").rows.map(r=>r.name),["Pilas"]);
+  assert.deepEqual(c.sections.find(s=>s.id==="_always").rows.map(r=>r.name),["Detergente"]);
+  /* no se mezclan con los pasillos del menú */
+  assert.ok(c.sections.filter(s=>s.kind==="aisle").every(s=>s.rows.every(r=>r.name!=="Pilas" && r.name!=="Detergente")));
+  /* en otra semana sólo sale lo de siempre */
+  vm.selectWeek(1);
+  assert.equal(vm.compra().sections.some(s=>s.id==="_once"),false);
+  assert.ok(vm.compra().sections.some(s=>s.id==="_always"));
+  vm.selectWeek(0);
+  vm.closeShopping();
+  assert.equal(vm.compra().sections.some(s=>s.id==="_once"),false,"«una vez» desaparece al cerrar la compra");
+  assert.deepEqual(vm.compra().sections.find(s=>s.id==="_always").rows.map(r=>r.name),["Detergente"]);
+  assert.match(vm.shareText(false),/TODAS LAS SEMANAS\n- Detergente/);
 });

@@ -23,7 +23,11 @@
 
 <header class="topbar">
   <div class="topbar-in">
-    <div class="wordmark" aria-label="Menuse">menuse<span>.</span></div>
+    <div class="brand">
+      <div class="wordmark" aria-label="Menuse">menuse<span>.</span></div>
+      <!-- casa compartida en la que estás (sólo si estás en una); al tocarlo, se abre la casa -->
+      <button class="housetag" id="houseTag" hidden></button>
+    </div>
     <!-- qué semana estás mirando; al tocarlo se elige otra -->
     <button class="weekpill" id="weekPill" aria-label="Elegir semana"></button>
     <!-- ajustes: estaciones, tema y copia de seguridad -->

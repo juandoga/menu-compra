@@ -32,8 +32,8 @@ export function openSettingsSheet(vm){
       const house=vm.houseInfo();
       host.append(block("Casa compartida",
         house.code
-          ? el("p",{className:"set-now"},"Estás en la casa ",el("b",{text:house.code}),".")
-          : null,
+          ? el("p",{className:"set-now"},"Estás en ",el("b",{text:"«"+house.name+"»"}),".")
+          : el("p",{className:"set-now"},"No estás en ninguna casa: tus datos sólo están en este móvil."),
         el("button",{className:"btn ghost full",text:house.code?"Ver la casa":"Compartir con tu familia",onClick:()=>openHouseSheet(vm)}),
         house.code ? null : hintLine("Crea una casa o únete a una con un código: todos los móviles de la casa verán el mismo menú y la misma lista.")));
 

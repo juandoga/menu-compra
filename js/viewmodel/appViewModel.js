@@ -17,6 +17,7 @@ const DAY_MS=864e5;
 const MONTHS=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 const MONTHS_SHORT=["ene","feb","mar","abr","may","jun","jul","ago","sept","oct","nov","dic"];
 const mealKind=rules.mealKind; /* comida, cena, desayuno o libre */
+const ONCE="_once", ALWAYS="_always"; /* apartados de la lista para lo añadido a mano */
 
 /* now: de dónde sale la hora. Se puede cambiar en las pruebas para simular otro día. */
 export function createAppViewModel(now=()=>new Date()){
@@ -195,15 +196,21 @@ export function createAppViewModel(now=()=>new Date()){
       const hideDone=repo.hideDone();
       const row=i=>({
         key:i.key, name:cap(i.item), hint:i.hint, qty:rules.itemQtyText(i), checked:!!s.checked[i.key],
-        tag: i.breakfast ? null : i.staple ? "siempre" : i.custom ? "una vez" : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
+        /* lo añadido a mano va en su propio apartado, así que no lleva etiqueta */
+        tag: i.custom ? null : i.allOptional ? "opcional" : isBasic(i.item) ? "básico" : null
       });
       const visible=rows=>hideDone ? rows.filter(r=>!r.checked) : rows;
       const fd=fromDay(st.week);
       const canTrimPast = st.curWeek!=null && st.week===st.curWeek && !st.shopAutoWeek && st.todayIdx>0;
-      const sections=repo.aisleOrder().map(id=>{
-        const its=main.filter(i=>sectionFor(i.item)===id);
-        return {id, label:sectionLabel(id), done:its.filter(i=>s.checked[i.key]).length, rows:its.map(row)};
-      }).filter(x=>x.rows.length);
+      /* apartados: lo que pide el menú, por pasillos; después, lo añadido a mano en dos apartados propios:
+         «Sólo esta compra» (se borra al pulsar «Compra hecha») y «Todas las semanas» (los fijos) */
+      const part=(id,label,its,kind)=>({id, label, kind, done:its.filter(i=>s.checked[i.key]).length, rows:its.map(row)});
+      const sections=repo.aisleOrder()
+        .map(id=>part(id,sectionLabel(id),main.filter(i=>!i.custom && sectionFor(i.item)===id),"aisle"))
+        .concat([
+          part(ONCE,"Sólo esta compra",main.filter(i=>i.custom && !i.staple),"once"),
+          part(ALWAYS,"Todas las semanas",main.filter(i=>i.staple),"always")])
+        .filter(x=>x.rows.length);
       const aisle = sections.some(x=>x.id===st.aisle) ? st.aisle : "all";
       return {
         filters:[{id:"all", label:"Todo", count:main.length, selected:aisle==="all"}]
@@ -263,10 +270,14 @@ export function createAppViewModel(now=()=>new Date()){
       const lines=[];
       const line=i=>{ const q=rules.itemQtyText(i); lines.push("- "+cap(i.item)+(q?" — "+q:"")); };
       repo.aisleOrder().forEach(id=>{
-        const part=its.filter(i=>!i.allOptional && !i.breakfast && sectionFor(i.item)===id);
+        const part=its.filter(i=>!i.allOptional && !i.custom && sectionFor(i.item)===id);
         if(!part.length) return;
         lines.push(sectionLabel(id).toUpperCase()); part.forEach(line); lines.push("");
       });
+      const once=its.filter(i=>i.custom && !i.staple);
+      if(once.length){ lines.push("SÓLO ESTA COMPRA"); once.forEach(line); lines.push(""); }
+      const always=its.filter(i=>i.staple && !i.breakfast);
+      if(always.length){ lines.push("TODAS LAS SEMANAS"); always.forEach(line); lines.push(""); }
       const opt=its.filter(i=>i.allOptional);
       if(opt.length){ lines.push("OPCIONALES"); opt.forEach(line); lines.push(""); }
       const bf=its.filter(i=>i.breakfast);
@@ -647,7 +658,7 @@ export function createAppViewModel(now=()=>new Date()){
     /* --- casa compartida --- */
     houseInfo(){
       const st2=house.syncStatus();
-      return {code:house.houseCode(), state:st2.state, at:st2.at};
+      return {code:house.houseCode(), name:house.houseName(), state:st2.state, at:st2.at};
     },
     onSyncStatus(fn){ return house.onStatus(fn); },
     /* pide los cambios de la casa; si ha llegado algo, se repinta. Devuelve true si cambió algo */
@@ -665,7 +676,9 @@ export function createAppViewModel(now=()=>new Date()){
       if(st.curWeek!==before && st.curWeek!=null){ st.week=st.curWeek; st.shopAutoWeek=false; }
       notify();
     },
-    async createHouse(){ return house.createHouse(); },          /* devuelve el código */
+    async createHouse(name){ const c=await house.createHouse(name); notify(); return c; }, /* devuelve el código */
+    async peekHouse(code){ return house.peekHouse(code); },     /* {code,name} o {error} */
+    renameHouse(n){ house.setHouseName(n); notify(); },
     async joinHouse(code){ return house.joinHouse(code); },      /* null si fue bien; si no, el motivo */
     leaveHouse(){ house.leaveHouse(); notify(); },
     normalizeHouseCode(t){ return house.normalizeCode(t); },

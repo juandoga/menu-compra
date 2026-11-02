@@ -69,9 +69,17 @@ Al final debe poner `fail 0`.
 Si cambias `sw.js`, sube el número de `CACHE` (`menuse-v3` → `menuse-v4`).
 Si creas un archivo nuevo en `js/` o `css/`, añádelo a la lista `ASSETS` de `sw.js`.
 
+## Lista de la compra: lo añadido a mano
+
+Lo que escribes abajo en la lista va en apartados propios, separado de lo que pide el menú:
+- **Sólo esta compra** (chincheta gris): se borra al pulsar «Compra hecha».
+- **Todas las semanas** (chincheta roja): sale siempre; si una semana no hace falta, se tacha.
+
 ## Casa compartida (varios móviles con el mismo menú)
 
-En Ajustes → Casa compartida se crea una «casa» y se recibe un código (por ejemplo `K7PM-3QXD`).
+En Ajustes → Casa compartida se crea una «casa» con un nombre (por ejemplo «Casa García») y se
+recibe un código (por ejemplo `K7PM-3QXD`). El nombre sale bajo el logo en todos los móviles de
+la casa; si no estás en ninguna, no sale nada y Ajustes lo dice.
 Los móviles que se unen con ese código comparten el menú, las listas, los fijos, los pasillos,
 las personas y el gasto. Cada casa es independiente de las demás.
 

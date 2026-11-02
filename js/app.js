@@ -3,11 +3,13 @@
    y engancha lo que es de la «carcasa» de la app: pestañas, semanas, tema y modo sin conexión. */
 
 import { createAppViewModel } from "./viewmodel/appViewModel.js";
-import { el, showSnack, applyTheme, linkBtn, isSheetOpen } from "./view/dom.js";
+import { el, svg, showSnack, applyTheme, linkBtn, isSheetOpen } from "./view/dom.js";
+const HOUSE_ICON='<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/>';
 import { renderHoy } from "./view/hoyView.js";
 import { renderSemana } from "./view/semanaView.js";
 import { renderCompra } from "./view/compraView.js";
 import { openSettingsSheet } from "./view/sheets/settingsSheet.js";
+import { openHouseSheet } from "./view/sheets/houseSheet.js";
 import "./view/install.js"; /* escucha desde el principio el aviso de «se puede instalar» */
 import { publishPlan } from "./view/notify.js";
 import { openWeekPicker } from "./view/sheets/weekSheets.js";
@@ -38,6 +40,15 @@ function render(){
   pill.setAttribute("aria-label","Semana "+(vm.week+1)+(vm.week===vm.curWeek?", la de esta semana":"")+". Elegir otra");
   $("settingsBtn").classList.toggle("nudge", !!vm.backupReminder());
 
+  /* nombre de la casa compartida bajo el logo (nada si no estás en ninguna) */
+  const house=vm.houseInfo(), tag=$("houseTag");
+  tag.hidden=!house.code;
+  tag.textContent="";
+  if(house.code){
+    tag.append(svg(HOUSE_ICON,"2.2"),el("span",{text:house.name}));
+    tag.setAttribute("aria-label","Casa compartida: "+house.name+". Ver la casa");
+  }
+
   /* aviso al mirar el menú de otra estación */
   const banner=$("banner"), sb=vm.seasonBanner();
   banner.textContent="";
@@ -62,6 +73,7 @@ vm.subscribe(()=>{ clearTimeout(planTimer); planTimer=setTimeout(()=>publishPlan
 /* ---------- carcasa ---------- */
 for(const k in views) views[k].tab.addEventListener("click",()=>vm.setView(k));
 $("settingsBtn").addEventListener("click",()=>openSettingsSheet(vm));
+$("houseTag").addEventListener("click",()=>openHouseSheet(vm));
 $("weekPill").addEventListener("click",()=>openWeekPicker(vm));
 
 /* tema claro / oscuro (se cambia en Ajustes) */
